@@ -12,6 +12,7 @@ import MobileNavigation from './components/layout/MobileNavigation';
 import AddBookmarkModal from './components/bookmark/AddBookmarkModal';
 import LoginModal from './components/auth/LoginModal';
 import RegisterModal from './components/auth/RegisterModal';
+import SettingsModal from './components/settings/SettingsModal'; // Added Import
 import BackgroundAnimation from './components/layout/BackgroundAnimation';
 
 // Props for AppLayout
@@ -37,6 +38,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       <Header
         openLoginModal={openLoginModal}
         openRegisterModal={openRegisterModal}
+        openSettingsModal={openSettingsModal} // Pass openSettingsModal to Header
       />
       {/* Removed pb-16 md:pb-0 from here, will be on main content views */}
       <div className="flex-1 flex">
@@ -99,8 +101,8 @@ function App() {
       {/* Modals are rendered here, outside of Routes, so they can be displayed over any page */}
       <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
       <RegisterModal isOpen={isRegisterModalOpen} onClose={closeRegisterModal} />
+      <SettingsModal isOpen={isSettingsModalOpen} onClose={closeSettingsModal} /> {/* Render SettingsModal */}
       {/* <CollectionsModal isOpen={isCollectionsModalOpen} onClose={closeCollectionsModal} /> */}
-      {/* <SettingsModal isOpen={isSettingsModalOpen} onClose={closeSettingsModal} /> */}
 
       <Routes>
         <Route

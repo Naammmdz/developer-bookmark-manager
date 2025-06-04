@@ -3,14 +3,17 @@ import ReactDOM from 'react-dom/client'; // Standard way to import createRoot
 import App from './App'; // .tsx is optional in imports
 import './index.css';
 import { AuthProvider } from './context/AuthContext';
-import { BrowserRouter } from 'react-router-dom'; // Import BrowserRouter
+import { BrowserRouter } from 'react-router-dom';
+import { SettingsProvider } from './context/SettingsContext'; // Import SettingsProvider
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+      <SettingsProvider> {/* Wrap with SettingsProvider */}
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </SettingsProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

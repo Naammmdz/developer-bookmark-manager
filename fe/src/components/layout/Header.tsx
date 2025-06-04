@@ -10,9 +10,10 @@ import { Link } from 'react-router-dom'; // Added Link
 interface HeaderProps {
   openLoginModal: () => void;
   openRegisterModal: () => void;
+  openSettingsModal: () => void; // Added openSettingsModal to props
 }
 
-const Header: React.FC<HeaderProps> = ({ openLoginModal, openRegisterModal }) => {
+const Header: React.FC<HeaderProps> = ({ openLoginModal, openRegisterModal, openSettingsModal }) => {
   const {
     searchTerm,
     setSearchTerm,
@@ -129,7 +130,11 @@ const Header: React.FC<HeaderProps> = ({ openLoginModal, openRegisterModal }) =>
             </>
           )}
 
-          <button className="p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
+          <button
+            onClick={openSettingsModal} // Added onClick handler
+            className="p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
+            aria-label="Open settings" // Added aria-label
+          >
             <Settings size={18} className="text-white/70" />
           </button>
         </div>
