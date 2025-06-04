@@ -122,6 +122,7 @@ const BackgroundAnimation: React.FC = () => {
   // For solid or gradient backgrounds
   return (
     <div
+      key={selectedBackground} // Add this key
       className="fixed inset-0 -z-10 overflow-hidden"
       style={{ background: currentBackgroundSetting.css }}
     />
