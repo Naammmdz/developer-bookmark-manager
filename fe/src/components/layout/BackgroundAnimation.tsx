@@ -21,9 +21,8 @@ const BackgroundAnimation: React.FC = () => {
 
   if (currentBackgroundSetting.type === 'animated-blobs') {
     return (
-      <motion.div
-        className="fixed inset-0 -z-10 w-32 h-32 bg-red-500" // Simple, visible style
-        // No animation props for this test
+      <div
+        className="fixed inset-0 -z-10 w-32 h-32 bg-green-500" // Plain div, green background for differentiation
       />
     );
   }
