@@ -33,7 +33,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   const { isModalOpen: isAddBookmarkModalOpen } = useBookmarks();
 
   return (
-    <div className="min-h-screen flex flex-col bg-background-dark text-white">
+    <div className="min-h-screen flex flex-col bg-transparent text-white">
       <BackgroundAnimation />
       <Header
         openLoginModal={openLoginModal}
