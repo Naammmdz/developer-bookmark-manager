@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useBookmarks } from '../../context/BookmarkContext';
 import BookmarkCard from './BookmarkCard';
@@ -19,8 +19,15 @@ import {
 } from '@dnd-kit/sortable';
 
 const BookmarkGrid: React.FC = () => {
-  const { filteredBookmarks, activeCollection, reorderBookmarks } = useBookmarks();
+  const {
+    filteredBookmarks,
+    activeCollection,
+    reorderBookmarks,
+    visibleBookmarksCount,
+    loadMoreBookmarks, // Added
+  } = useBookmarks();
 
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -53,29 +60,65 @@ const BookmarkGrid: React.FC = () => {
       </motion.div>
     );
   }
+
+  const stableLoadMoreBookmarks = useCallback(loadMoreBookmarks, [loadMoreBookmarks]);
+
+  useEffect(() => {
+    if (!sentinelRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && visibleBookmarksCount < filteredBookmarks.length) {
+          stableLoadMoreBookmarks();
+        }
+      },
+      {
+        root: null, // viewport
+        rootMargin: '0px',
+        threshold: 1.0, // When 100% of the sentinel is visible
+      }
+    );
+
+    observer.observe(sentinelRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+    // Add filteredBookmarks.length to ensure observer re-evaluates if total items change
+  }, [stableLoadMoreBookmarks, visibleBookmarksCount, filteredBookmarks.length]);
   
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext
-        items={filteredBookmarks.map(b => b.id.toString())} // dnd-kit IDs are typically strings
-        strategy={rectSortingStrategy}
+    <> {/* Fragment to wrap DndContext and the optional loading indicator/sentinel */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full">
-          {filteredBookmarks.map((bookmark, index) => (
-            <BookmarkCard
-              key={bookmark.id}
-              id={bookmark.id} // Pass id for useSortable
-              bookmark={bookmark}
-              index={index}
-            />
-          ))}
+        <SortableContext
+          items={filteredBookmarks.slice(0, visibleBookmarksCount).map(b => b.id.toString())}
+          strategy={rectSortingStrategy}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full">
+            {filteredBookmarks.slice(0, visibleBookmarksCount).map((bookmark, index) => (
+              <BookmarkCard
+                key={bookmark.id}
+                id={bookmark.id}
+                bookmark={bookmark}
+                index={index}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      {/* Sentinel and Loading Indicator */}
+      {visibleBookmarksCount < filteredBookmarks.length && (
+        <div ref={sentinelRef} className="col-span-full text-center py-6">
+          <p className="text-white/60 text-sm">Loading more bookmarks...</p>
+          {/* Optionally, add a spinner icon here */}
         </div>
-      </SortableContext>
-    </DndContext>
+      )}
+    </>
   );
 };
 

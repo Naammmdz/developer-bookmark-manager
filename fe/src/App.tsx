@@ -14,6 +14,7 @@ import LoginModal from './components/auth/LoginModal';
 import RegisterModal from './components/auth/RegisterModal';
 import SettingsModal from './components/settings/SettingsModal'; // Added Import
 import BackgroundAnimation from './components/layout/BackgroundAnimation';
+import BulkActionBar from './components/ui/BulkActionBar'; // Added Import
 
 // Props for AppLayout
 interface AppLayoutProps {
@@ -103,6 +104,8 @@ function App() {
       <RegisterModal isOpen={isRegisterModalOpen} onClose={closeRegisterModal} />
       <SettingsModal isOpen={isSettingsModalOpen} onClose={closeSettingsModal} /> {/* Render SettingsModal */}
       {/* <CollectionsModal isOpen={isCollectionsModalOpen} onClose={closeCollectionsModal} /> */}
+
+      <BulkActionBar /> {/* Added BulkActionBar here */}
 
       <Routes>
         <Route

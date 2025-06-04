@@ -33,7 +33,13 @@ interface BookmarkContextType {
   clearSelection: () => void;
   selectAllVisibleBookmarks: (visibleIds: (number | string)[]) => void;
   deleteSelectedBookmarks: () => void;
+  // Infinite scroll
+  visibleBookmarksCount: number;
+  loadMoreBookmarks: () => void;
 }
+
+const INITIAL_LOAD_COUNT = 20;
+const PAGE_SIZE = 15;
 
 const BookmarkContext = createContext<BookmarkContextType | undefined>(undefined);
 
@@ -67,6 +73,8 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
   // Bulk selection state
   const [isBulkSelectMode, setIsBulkSelectMode] = useState<boolean>(false);
   const [selectedBookmarkIds, setSelectedBookmarkIds] = useState<(number|string)[]>([]);
+  // Infinite scroll state
+  const [visibleBookmarksCount, setVisibleBookmarksCount] = useState<number>(INITIAL_LOAD_COUNT);
 
   const availableTags = React.useMemo(() => {
     const allTags = new Set<string>();
@@ -142,6 +150,35 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
+
+  // Infinite scroll functions
+  const loadMoreBookmarks = useCallback(() => {
+    // This will be based on filteredBookmarks.length in the effect below,
+    // but the context function itself doesn't need to know about filteredBookmarks directly
+    setVisibleBookmarksCount(prevCount => prevCount + PAGE_SIZE);
+  }, []);
+
+  // Reset visible count when filters change
+  const handleSetActiveCollection = useCallback((collection: string) => {
+    setActiveCollection(collection);
+    setVisibleBookmarksCount(INITIAL_LOAD_COUNT);
+  }, []);
+
+  const handleSetSearchTerm = useCallback((term: string) => {
+    setSearchTerm(term);
+    setVisibleBookmarksCount(INITIAL_LOAD_COUNT);
+  }, []);
+
+  const handleSetSelectedTag = useCallback((tag: string | null) => {
+    setSelectedTag(tag);
+    setVisibleBookmarksCount(INITIAL_LOAD_COUNT);
+  }, []);
+
+  const handleSetSelectedDateRange = useCallback((range: string | null) => {
+    setSelectedDateRange(range);
+    setVisibleBookmarksCount(INITIAL_LOAD_COUNT);
+  }, []);
+
 
   const reorderBookmarks = useCallback((activeId: number, overId: number) => {
     setBookmarks((prevBookmarks) => {
@@ -226,8 +263,8 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
     activeCollection,
     searchTerm,
     isModalOpen,
-    setActiveCollection,
-    setSearchTerm,
+    setActiveCollection: handleSetActiveCollection,
+    setSearchTerm: handleSetSearchTerm,
     toggleFavorite,
     addBookmark,
     deleteBookmark,
@@ -236,9 +273,9 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
     reorderBookmarks,
     // New values for context
     selectedTag,
-    setSelectedTag,
+    setSelectedTag: handleSetSelectedTag,
     selectedDateRange,
-    setSelectedDateRange,
+    setSelectedDateRange: handleSetSelectedDateRange,
     availableTags,
     filteredBookmarks,
     // Bulk selection context values
@@ -248,7 +285,10 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
     toggleBookmarkSelection,
     clearSelection,
     selectAllVisibleBookmarks,
-    deleteSelectedBookmarks
+    deleteSelectedBookmarks,
+    // Infinite scroll context values
+    visibleBookmarksCount,
+    loadMoreBookmarks
   };
 
   return (
