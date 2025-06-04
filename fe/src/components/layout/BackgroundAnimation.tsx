@@ -21,43 +21,10 @@ const BackgroundAnimation: React.FC = () => {
 
   if (currentBackgroundSetting.type === 'animated-blobs') {
     return (
-      <div className="fixed inset-0 -z-10 overflow-hidden"> {/* Main container for blobs */}
-        <motion.div
-          className="absolute top-0 left-0 w-[800px] h-[800px] bg-gradient-to-br from-primary/40 to-secondary/40 rounded-full blur-[150px] opacity-40"
-          animate={{
-            x: [-200, 0, -200],
-            y: [-200, 0, -200],
-            scale: [1, 1.2, 1],
-            rotate: [0, 90, 0],
-          }}
-          transition={{
-            duration: 25,
-            ease: "easeInOut",
-            repeat: Infinity,
-            repeatType: "mirror"
-          }}
-        />
-        <motion.div
-          className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-gradient-to-tl from-accent/30 to-primary/30 rounded-full blur-[120px] opacity-30"
-          animate={{
-            x: [100, -100, 100],
-            y: [100, -50, 100],
-            scale: [1, 1.1, 1],
-            rotate: [0, -90, 0],
-          }}
-          transition={{
-            duration: 20,
-            ease: "easeInOut",
-            repeat: Infinity,
-            repeatType: "mirror",
-            delay: 2
-          }}
-        />
-        {/* This div creates an overlay that can subtly tint or darken the animated blobs
-            or ensure text readability if blobs are too bright.
-            Adjust opacity or remove if not desired. */}
-        <div className="absolute inset-0 bg-gradient-to-br from-background-dark/20 via-transparent to-background-darker/20"></div>
-      </div>
+      <motion.div
+        className="fixed inset-0 -z-10 w-32 h-32 bg-red-500" // Simple, visible style
+        // No animation props for this test
+      />
     );
   }
 
