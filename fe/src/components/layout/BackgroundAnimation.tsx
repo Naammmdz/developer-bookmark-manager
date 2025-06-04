@@ -1,7 +1,9 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { useSettings } from '../../context/SettingsContext';
+// import { motion } from 'framer-motion'; // Now unused
+// import { useSettings } from '../../context/SettingsContext'; // Now unused
+// import { useEffect, useRef } from 'react'; // Were already removed
 
+/*
 const backgroundOptions: { [key: string]: { type: 'animated-blobs' | 'gradient' | 'solid', css?: string } } = {
   defaultGradient: { type: 'animated-blobs' },
   oceanBlue: { type: 'gradient', css: 'linear-gradient(135deg, #0A4D68, #088395, #05BFDB, #00FFCA)' },
@@ -10,29 +12,13 @@ const backgroundOptions: { [key: string]: { type: 'animated-blobs' | 'gradient' 
   cosmicPurple: { type: 'gradient', css: 'linear-gradient(135deg, #23074d, #cc5333)' },
   forestGreen: { type: 'solid', css: '#228B22' },
 };
+*/
 
 const BackgroundAnimation: React.FC = () => {
-  const { selectedBackground } = useSettings();
-
-  // Ensure a valid background option is selected, defaulting to 'defaultGradient'
-  const currentBackgroundSetting = backgroundOptions[selectedBackground]
-                                  ? backgroundOptions[selectedBackground]
-                                  : backgroundOptions.defaultGradient;
-
-  if (currentBackgroundSetting.type === 'animated-blobs') {
-    return (
-      <div
-        className="fixed inset-0 -z-10 w-32 h-32 bg-green-500" // Plain div, green background for differentiation
-      />
-    );
-  }
-
-  // For solid or gradient backgrounds
+  // All previous logic (useSettings, useEffect, conditional rendering) is bypassed for this test.
   return (
     <div
-      key={selectedBackground}
-      className="fixed inset-0 -z-10 overflow-hidden"
-      style={{ background: currentBackgroundSetting.css }}
+      className="fixed inset-0 -z-10 w-32 h-32 bg-green-500" // Hardcoded green test div
     />
   );
 };
