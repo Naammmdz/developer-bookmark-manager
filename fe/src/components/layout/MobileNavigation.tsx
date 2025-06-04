@@ -1,16 +1,25 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useBookmarks } from '../../context/BookmarkContext';
-import { Bookmark, Heart, Layers, List, Settings, Plus } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext'; // Added for context
+import { Bookmark, Heart, Layers, Settings, Plus } from 'lucide-react'; // Removed List as it's not used
 
-const MobileNavigation: React.FC = () => {
+// Define Props for MobileNavigation
+interface MobileNavigationProps {
+  openCollectionsModal: () => void;
+  openSettingsModal: () => void;
+}
+
+const MobileNavigation: React.FC<MobileNavigationProps> = ({ openCollectionsModal, openSettingsModal }) => {
   const { activeCollection, setActiveCollection, openModal } = useBookmarks();
-  
+  const { currentUser } = useAuth(); // Added for context, not used directly in this change
+
+  // Adjusted navItems to include specific onClick handlers or identify them for conditional logic
   const navItems = [
-    { name: 'All Bookmarks', icon: <Bookmark size={20} /> },
-    { name: 'Favorites', icon: <Heart size={20} /> },
-    { name: 'Collections', icon: <Layers size={20} /> },
-    { name: 'Settings', icon: <Settings size={20} /> },
+    { id: 'all-bookmarks', name: 'All Bookmarks', icon: <Bookmark size={20} />, action: () => setActiveCollection('All Bookmarks') },
+    { id: 'favorites', name: 'Favorites', icon: <Heart size={20} />, action: () => setActiveCollection('Favorites') },
+    { id: 'collections', name: 'Collections', icon: <Layers size={20} />, action: openCollectionsModal },
+    { id: 'settings', name: 'Settings', icon: <Settings size={20} />, action: openSettingsModal },
   ];
   
   return (
@@ -22,12 +31,13 @@ const MobileNavigation: React.FC = () => {
       <div className="flex justify-around items-center py-3 px-2">
         {navItems.map((item) => (
           <button
-            key={item.name}
-            onClick={() => item.name !== 'Settings' && setActiveCollection(item.name)}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg ${
-              activeCollection === item.name
+            key={item.id}
+            onClick={item.action} // Use the action from navItems
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg transition-colors ${
+              // Highlight based on activeCollection for relevant items, or other criteria for modals if needed
+              (item.id === 'all-bookmarks' || item.id === 'favorites') && activeCollection === item.name
                 ? 'text-primary'
-                : 'text-white/60'
+                : 'text-white/60 hover:text-white'
             }`}
           >
             {item.icon}
