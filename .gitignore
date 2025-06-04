@@ -1,4 +1,29 @@
-.sass-cache/
-*.css.map
-*.sass.map
-*.scss.map
+# Node (frontend)
+frontend/node_modules
+frontend/build
+frontend/dist
+frontend/.env.local
+frontend/.next
+frontend/.cache
+
+# Java (backend)
+backend/target/
+backend/.idea/
+backend/.classpath
+backend/.project
+backend/.settings/
+backend/.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# dotenv
+.env
+.env.*
+
+# Docker
+postgres_data/
