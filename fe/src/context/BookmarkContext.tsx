@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { useAuth } from './AuthContext'; // Add this import
 import { sampleBookmarks, sampleCollections } from '../data/sampleData';
+import { arrayMove } from '@dnd-kit/sortable';
 import { Bookmark, Collection } from '../types';
 
 interface BookmarkContextType {
@@ -16,6 +17,7 @@ interface BookmarkContextType {
   deleteBookmark: (id: number) => void;
   openModal: () => void;
   closeModal: () => void;
+  reorderBookmarks: (activeId: number, overId: number) => void;
   filteredBookmarks: Bookmark[];
   // New state for filters
   selectedTag: string | null;
@@ -23,6 +25,14 @@ interface BookmarkContextType {
   selectedDateRange: string | null; // e.g., "all", "today", "last7days", "last30days"
   setSelectedDateRange: (range: string | null) => void;
   availableTags: string[];
+  // Bulk selection
+  isBulkSelectMode: boolean;
+  selectedBookmarkIds: (number | string)[];
+  toggleBulkSelectMode: () => void;
+  toggleBookmarkSelection: (id: number | string) => void;
+  clearSelection: () => void;
+  selectAllVisibleBookmarks: (visibleIds: (number | string)[]) => void;
+  deleteSelectedBookmarks: () => void;
 }
 
 const BookmarkContext = createContext<BookmarkContextType | undefined>(undefined);
@@ -41,7 +51,12 @@ interface BookmarkProviderProps {
 
 export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
   const { currentUser } = useAuth(); // Add this line
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>(sampleBookmarks);
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>(() =>
+    sampleBookmarks.map((bookmark, index) => ({
+      ...bookmark,
+      userOrder: bookmark.userOrder ?? index, // Assign index if userOrder is not already set
+    }))
+  );
   const [collections] = useState<Collection[]>(sampleCollections);
   const [activeCollection, setActiveCollection] = useState<string>("All Bookmarks");
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -49,6 +64,9 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
   // New state for filters
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [selectedDateRange, setSelectedDateRange] = useState<string | null>(null);
+  // Bulk selection state
+  const [isBulkSelectMode, setIsBulkSelectMode] = useState<boolean>(false);
+  const [selectedBookmarkIds, setSelectedBookmarkIds] = useState<(number|string)[]>([]);
 
   const availableTags = React.useMemo(() => {
     const allTags = new Set<string>();
@@ -57,6 +75,41 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
     });
     return Array.from(allTags).sort();
   }, [bookmarks]);
+
+  // Bulk selection functions
+  const clearSelection = useCallback(() => {
+    setSelectedBookmarkIds([]);
+  }, []);
+
+  const toggleBulkSelectMode = useCallback(() => {
+    setIsBulkSelectMode(prev => {
+      if (prev) { // If turning off
+        clearSelection();
+      }
+      return !prev;
+    });
+  }, [clearSelection]);
+
+  const toggleBookmarkSelection = useCallback((id: number | string) => {
+    setSelectedBookmarkIds(prevSelected =>
+      prevSelected.includes(id)
+        ? prevSelected.filter(selectedId => selectedId !== id)
+        : [...prevSelected, id]
+    );
+  }, []);
+
+  const selectAllVisibleBookmarks = useCallback((visibleIds: (number | string)[]) => {
+    setSelectedBookmarkIds(visibleIds);
+  }, []);
+
+  const deleteSelectedBookmarks = useCallback(() => {
+    setBookmarks(prevBookmarks =>
+      prevBookmarks.filter(bookmark => !selectedBookmarkIds.includes(bookmark.id))
+    );
+    clearSelection();
+    // setIsBulkSelectMode(false); // Optionally turn off bulk select mode after deletion
+  }, [selectedBookmarkIds, clearSelection]);
+
 
   const toggleFavorite = (id: number) => {
     setBookmarks(
@@ -77,9 +130,10 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
     const newBookmark: Bookmark = {
       ...bookmark,
       id: Math.max(...bookmarks.map(b => b.id), 0) + 1,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      userOrder: Date.now() // New items go to the end by default
     };
-    setBookmarks([newBookmark, ...bookmarks]);
+    setBookmarks(prevBookmarks => [newBookmark, ...prevBookmarks]);
   };
 
   const deleteBookmark = (id: number) => {
@@ -89,55 +143,82 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
-  // Filter bookmarks based on active collection and search term
-  // Filter bookmarks based on active collection and search term
-  const filteredBookmarks = bookmarks.filter((bookmark) => {
-    const matchesCollection =
-      activeCollection === "All Bookmarks" ||
-      (activeCollection === "Favorites" && currentUser && bookmark.isFavorite) ||
-      activeCollection === "Recently Added" ||
-      activeCollection === bookmark.collection;
-      
-    const matchesSearch =
-      searchTerm === "" ||
-      bookmark.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (bookmark.description && bookmark.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      bookmark.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+  const reorderBookmarks = useCallback((activeId: number, overId: number) => {
+    setBookmarks((prevBookmarks) => {
+      const oldIndex = prevBookmarks.findIndex(b => b.id === activeId);
+      const newIndex = prevBookmarks.findIndex(b => b.id === overId);
 
-    const matchesTag =
-      !selectedTag || bookmark.tags.includes(selectedTag);
-
-    const matchesDateRange = () => {
-      if (!selectedDateRange || selectedDateRange === "all") return true;
-      // Ensure bookmark.createdAt is valid before creating a Date object
-      if (!bookmark.createdAt) return true; // Or handle as an error/default
-
-      const bookmarkDate = new Date(bookmark.createdAt);
-       // Check if bookmarkDate is valid after parsing
-      if (isNaN(bookmarkDate.getTime())) return true;
-
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // Start of today
-
-      switch (selectedDateRange) {
-        case "today":
-          return bookmarkDate >= today;
-        case "last7days":
-          const sevenDaysAgo = new Date(today);
-          sevenDaysAgo.setDate(today.getDate() - 7);
-          return bookmarkDate >= sevenDaysAgo;
-        case "last30days":
-          const thirtyDaysAgo = new Date(today);
-          thirtyDaysAgo.setDate(today.getDate() - 30);
-          return bookmarkDate >= thirtyDaysAgo;
-        default:
-          return true;
+      if (oldIndex === -1 || newIndex === -1) {
+        return prevBookmarks; // Should not happen if IDs are correct
       }
-    };
 
-    return matchesCollection && matchesSearch && matchesTag && matchesDateRange();
-  });
+      const reorderedArray = arrayMove(prevBookmarks, oldIndex, newIndex);
+
+      // Update userOrder for all bookmarks
+      return reorderedArray.map((bookmark, index) => ({
+        ...bookmark,
+        userOrder: index,
+      }));
+    });
+  }, []);
+
+
+  // Filter bookmarks based on active collection and search term
+  const filteredBookmarks = React.useMemo(() => {
+    let processedBookmarks = [...bookmarks];
+
+    // 1. Initial sort based on userOrder, unless "Recently Added"
+    if (activeCollection === "Recently Added") {
+      processedBookmarks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } else {
+      processedBookmarks.sort((a, b) => (a.userOrder ?? 0) - (b.userOrder ?? 0));
+    }
+
+    return processedBookmarks.filter((bookmark) => {
+      const matchesCollection =
+        activeCollection === "All Bookmarks" ||
+        (activeCollection === "Favorites" && currentUser && bookmark.isFavorite) ||
+        activeCollection === "Recently Added" || // This ensures "Recently Added" items are not filtered out here
+        activeCollection === bookmark.collection;
+
+      const matchesSearch =
+        searchTerm === "" ||
+        bookmark.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (bookmark.description && bookmark.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        bookmark.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      const matchesTag =
+        !selectedTag || bookmark.tags.includes(selectedTag);
+
+      const matchesDateRange = () => {
+        if (!selectedDateRange || selectedDateRange === "all") return true;
+        if (!bookmark.createdAt) return true;
+
+        const bookmarkDate = new Date(bookmark.createdAt);
+        if (isNaN(bookmarkDate.getTime())) return true;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        switch (selectedDateRange) {
+          case "today":
+            return bookmarkDate >= today;
+          case "last7days":
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(today.getDate() - 7);
+            return bookmarkDate >= sevenDaysAgo;
+          case "last30days":
+            const thirtyDaysAgo = new Date(today);
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+            return bookmarkDate >= thirtyDaysAgo;
+          default:
+            return true;
+        }
+      };
+
+      return matchesCollection && matchesSearch && matchesTag && matchesDateRange();
+    });
+  }, [bookmarks, activeCollection, searchTerm, selectedTag, selectedDateRange, currentUser]);
 
   const value = {
     bookmarks,
@@ -152,13 +233,22 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
     deleteBookmark,
     openModal,
     closeModal,
+    reorderBookmarks,
     // New values for context
     selectedTag,
     setSelectedTag,
     selectedDateRange,
     setSelectedDateRange,
     availableTags,
-    filteredBookmarks
+    filteredBookmarks,
+    // Bulk selection context values
+    isBulkSelectMode,
+    selectedBookmarkIds,
+    toggleBulkSelectMode,
+    toggleBookmarkSelection,
+    clearSelection,
+    selectAllVisibleBookmarks,
+    deleteSelectedBookmarks
   };
 
   return (

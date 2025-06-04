@@ -3,9 +3,38 @@ import { motion } from 'framer-motion';
 import { useBookmarks } from '../../context/BookmarkContext';
 import BookmarkCard from './BookmarkCard';
 import { FolderOpen } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
 
 const BookmarkGrid: React.FC = () => {
-  const { filteredBookmarks, activeCollection } = useBookmarks();
+  const { filteredBookmarks, activeCollection, reorderBookmarks } = useBookmarks();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      // Ensure IDs are numbers if your reorderBookmarks expects numbers
+      reorderBookmarks(Number(active.id), Number(over.id));
+    }
+  };
   
   if (filteredBookmarks.length === 0) {
     return (
@@ -26,15 +55,27 @@ const BookmarkGrid: React.FC = () => {
   }
   
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full">
-      {filteredBookmarks.map((bookmark, index) => (
-        <BookmarkCard
-          key={bookmark.id}
-          bookmark={bookmark}
-          index={index}
-        />
-      ))}
-    </div>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext
+        items={filteredBookmarks.map(b => b.id.toString())} // dnd-kit IDs are typically strings
+        strategy={rectSortingStrategy}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full">
+          {filteredBookmarks.map((bookmark, index) => (
+            <BookmarkCard
+              key={bookmark.id}
+              id={bookmark.id} // Pass id for useSortable
+              bookmark={bookmark}
+              index={index}
+            />
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
   );
 };
 

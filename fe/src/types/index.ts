@@ -9,6 +9,7 @@ export interface Bookmark {
   isFavorite: boolean;
   favicon: string;
   createdAt: string;
+  userOrder?: number;
 }
 
 export interface Collection {
