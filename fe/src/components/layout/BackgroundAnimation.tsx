@@ -114,7 +114,7 @@ const BackgroundAnimation: React.FC = () => {
     return (
       <canvas
         ref={canvasRef}
-        className="fixed top-0 left-0 w-full h-full -z-10 bg-background-darker" // Added base bg for canvas
+        className="fixed top-0 left-0 w-full h-full -z-10" // Removed bg-background-darker
       />
     );
   }
