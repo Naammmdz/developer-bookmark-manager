@@ -18,7 +18,15 @@ const BackgroundAnimation: React.FC = () => {
   // All previous logic (useSettings, useEffect, conditional rendering) is bypassed for this test.
   return (
     <div
-      className="fixed inset-0 -z-10 w-32 h-32 bg-green-500" // Hardcoded green test div
+      style={{
+        position: 'fixed',
+        top: '0px',
+        left: '0px',
+        width: '128px', // Equivalent to w-32 (1 unit = 4px, 32 units = 128px)
+        height: '128px', // Equivalent to h-32
+        backgroundColor: 'lime', // Using 'lime' for a very obvious color
+        zIndex: -5 // Adjusted z-index for testing
+      }}
     />
   );
 };
