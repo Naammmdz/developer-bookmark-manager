@@ -27,9 +27,9 @@ const Sidebar: React.FC = () => {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.2 }}
-      className="w-64 hidden md:block h-[calc(100vh-76px)] overflow-y-auto sticky top-[76px]"
+      className="hidden md:block" // Removed redundant layout classes, AppLayout handles them
     >
-      <GlassCard className="h-full p-4 m-4">
+      <GlassCard className="h-full p-4 m-4"> {/* h-full should now correctly fill the parent aside */}
         <h2 className="text-white/90 font-medium mb-4 px-2">Collections</h2>
         
         <nav>

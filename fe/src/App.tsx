@@ -33,33 +33,42 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   const { isModalOpen: isAddBookmarkModalOpen } = useBookmarks();
 
   return (
-    <div className="min-h-screen flex bg-transparent text-white">
-      <BackgroundAnimation />
-      {/* Fixed Sidebar */}
-      <aside className="w-64 h-screen fixed top-0 left-0 flex flex-col border-r border-white/10 bg-sidebar">
+    <div className="flex min-h-screen text-white"> {/* Root div */}
+      <BackgroundAnimation className="absolute inset-0 -z-10" />
+
+      {/* Sidebar */}
+      <aside className="fixed left-0 top-0 h-screen w-64 z-40 overflow-y-auto glass-card flex flex-col border-r border-white/10 bg-sidebar">
         <Sidebar />
       </aside>
-      {/* Main content area, offset by sidebar width */}
-      <div className="ml-64 flex-1 flex flex-col min-h-0">
-        {/* Header within the main content area */}
-        <Header
-          openLoginModal={openLoginModal}
-          openRegisterModal={openRegisterModal}
-          openSettingsModal={openSettingsModal}
-        />
+
+      {/* Main content area */}
+      <div className="ml-64 flex-1 flex flex-col"> {/* Main content div */}
+        {/* Header */}
+        <header className="sticky top-0 z-30 glass-card p-4 border-b border-white/10">
+          <Header
+            openLoginModal={openLoginModal}
+            openRegisterModal={openRegisterModal}
+            openSettingsModal={openSettingsModal}
+          />
+        </header>
+
         {/* Outlet for child route components */}
-        <div className="flex-1 min-h-0">
+        <main className="p-6 flex-1 overflow-y-auto">
           <Outlet /> {/* BookmarksViewWithSidebar or ProfileView will render here */}
-        </div>
-        {/* KeyboardShortcutsButton consolidated here */}
-        <div className="fixed bottom-6 right-6 z-50">
-          <KeyboardShortcutsButton />
-        </div>
+        </main>
       </div>
+
+      {/* MobileNavigation - retains fixed positioning & high z-index */}
       <MobileNavigation
         openSettingsModal={openSettingsModal}
         openCollectionsModal={openCollectionsModal}
       />
+
+      {/* KeyboardShortcutsButton - retains fixed positioning & high z-index */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <KeyboardShortcutsButton />
+      </div>
+
       {/* AddBookmarkModal is controlled by BookmarkContext, so it's rendered if its state is open */}
       {isAddBookmarkModalOpen && <AddBookmarkModal />}
     </div>
