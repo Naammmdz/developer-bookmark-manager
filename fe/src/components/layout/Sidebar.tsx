@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { useBookmarks } from '../../context/BookmarkContext';
 import { Bookmark, Layers, Server, Palette, FileText, Heart, Clock } from 'lucide-react';
 import GlassCard from '../ui/GlassCard';
+import TagsFilter from '../filters/TagsFilter';
+import DateRangeFilter from '../filters/DateRangeFilter'; // Added import
 
 const Sidebar: React.FC = () => {
   const { collections, activeCollection, setActiveCollection } = useBookmarks();
@@ -75,14 +77,12 @@ const Sidebar: React.FC = () => {
           <div className="px-2 space-y-3"> {/* Added padding and spacing for filter placeholders */}
             <div>
               <p className="text-sm text-white/60 mb-1">Tags</p>
-              {/* TagsFilter will go here. For now, a placeholder: */}
-              <div className="p-2 rounded bg-white/5 text-xs text-white/40">Placeholder: Tags Filter</div>
+              <TagsFilter />
             </div>
 
             <div>
               <p className="text-sm text-white/60 mb-1">Date Range</p>
-              {/* DateRangeFilter will go here. For now, a placeholder: */}
-              <div className="p-2 rounded bg-white/5 text-xs text-white/40">Placeholder: Date Range Filter</div>
+              <DateRangeFilter />
             </div>
 
             <div>

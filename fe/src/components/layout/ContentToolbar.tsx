@@ -1,4 +1,5 @@
 import React from 'react';
+import BulkActionsToolbar from '../actions/BulkActionsToolbar'; // Added import
 
 const ContentToolbar: React.FC = () => {
   return (
@@ -11,9 +12,7 @@ const ContentToolbar: React.FC = () => {
 
       {/* Right Section: Action Controls */}
       <div className="flex items-center space-x-3">
-        <div className="p-2 rounded bg-white/10 text-xs text-white/50">
-          Placeholder: BulkActionsToolbar
-        </div>
+        <BulkActionsToolbar />
         <div className="p-2 rounded bg-white/10 text-xs text-white/50">
           Placeholder: ViewToggle
         </div>
