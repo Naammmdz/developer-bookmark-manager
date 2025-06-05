@@ -93,20 +93,20 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
     const data: { [key: string]: CollectionWithItems } = {};
     const recentLimit = 10;
 
-    // Sort all bookmarks by createdAt date for 'all' and 'recently_added'
-    const sortedBookmarks = [...bookmarks].map(bm => ({ ...bm, parsedCreatedAt: new Date(bm.createdAt) })).filter(bm => !isNaN(bm.parsedCreatedAt.getTime())).sort((a, b) => b.parsedCreatedAt.getTime() - a.parsedCreatedAt.getTime());
+    // Date-sorted bookmarks, primarily for 'Recently Added'
+    const dateSortedBookmarks = [...bookmarks].map(bm => ({ ...bm, parsedCreatedAt: new Date(bm.createdAt) })).filter(bm => !isNaN(bm.parsedCreatedAt.getTime())).sort((a, b) => b.parsedCreatedAt.getTime() - a.parsedCreatedAt.getTime());
 
-    // 'All Bookmarks' Collection
+    // 'All Bookmarks' Collection - uses original bookmark order
     data['all'] = {
       id: 'all',
       name: 'All Bookmarks',
-      icon: 'Archive', // Example icon name, actual component rendered in UI
-      items: sortedBookmarks,
-      count: sortedBookmarks.length,
+      icon: 'Archive',
+      items: [...bookmarks], // Use original bookmarks array (maintains user-defined order)
+      count: bookmarks.length,
     };
 
-    // 'Favorites' Collection
-    const favoriteItems = sortedBookmarks.filter(bm => bm.isFavorite);
+    // 'Favorites' Collection - uses original bookmark order among favorites
+    const favoriteItems = bookmarks.filter(bm => bm.isFavorite); // Filter from original bookmarks
     data['favorites'] = {
       id: 'favorites',
       name: 'Favorites',
@@ -115,20 +115,20 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
       count: favoriteItems.length,
     };
 
-    // 'Recently Added' Collection
+    // 'Recently Added' Collection - uses date-sorted bookmarks
     data['recently_added'] = {
       id: 'recently_added',
       name: 'Recently Added',
       icon: 'Clock',
-      items: sortedBookmarks.slice(0, recentLimit),
-      count: Math.min(sortedBookmarks.length, recentLimit),
+      items: dateSortedBookmarks.slice(0, recentLimit), // Uses dateSortedBookmarks
+      count: Math.min(dateSortedBookmarks.length, recentLimit), // Based on dateSortedBookmarks
     };
 
-    // Process static collections from sampleCollections
+    // Process static collections from sampleCollections - uses original bookmark order within each collection
     staticCollections.forEach(collection => {
-      // Filter bookmarks by collection NAME as per subtask instruction
-      const collectionItems = sortedBookmarks.filter(bm => bm.collection === collection.name);
-      const key = collection.id.toString(); // Ensure key is string (already is, but for explicit adherence)
+      // Filter bookmarks by collection NAME from the original bookmarks array
+      const collectionItems = bookmarks.filter(bm => bm.collection === collection.name);
+      const key = collection.id.toString();
       data[key] = {
         id: key, // Use the stringified ID as the object's ID
         name: collection.name,
