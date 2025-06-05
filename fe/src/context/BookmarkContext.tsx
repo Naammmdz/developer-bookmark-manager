@@ -45,7 +45,11 @@ interface BookmarkProviderProps {
 export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
   const { currentUser } = useAuth();
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(sampleBookmarks);
-  const [staticCollections] = useState<Collection[]>(sampleCollections); // Renamed to avoid confusion
+  // Filter out special collection names during initial state setting
+  const [staticCollections] = useState<Collection[]>(() => {
+    const excludedNames = ['All Bookmarks', 'Favorites', 'Recently Added'];
+    return sampleCollections.filter(col => !excludedNames.includes(col.name));
+  });
   const [activeCollection, setActiveCollection] = useState<string>('all'); // Initialized to 'all'
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -124,10 +128,13 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
 
     // Process static collections from sampleCollections
     staticCollections.forEach(collection => {
-      // Assuming bookmark.collection is the string ID (e.g., "coll_1")
-      const collectionItems = sortedBookmarks.filter(bm => bm.collection === collection.id);
-      data[collection.id] = {
-        ...collection, // id, name, icon from staticCollection
+      // Filter bookmarks by collection NAME as per subtask instruction
+      const collectionItems = sortedBookmarks.filter(bm => bm.collection === collection.name);
+      const key = collection.id.toString(); // Ensure key is string (already is, but for explicit adherence)
+      data[key] = {
+        id: key, // Use the stringified ID as the object's ID
+        name: collection.name,
+        icon: collection.icon,
         items: collectionItems,
         count: collectionItems.length,
       };
