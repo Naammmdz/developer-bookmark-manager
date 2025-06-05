@@ -44,7 +44,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       {/* Main content area */}
       <div className="ml-64 flex-1 flex flex-col"> {/* Main content div */}
         {/* Header */}
-        <header className="sticky top-0 z-30 glass-card p-4 border-b border-white/10">
+        <header className="sticky top-0 z-30 bg-black/20 backdrop-blur-lg border-b border-white/10 p-4">
           <Header
             openLoginModal={openLoginModal}
             openRegisterModal={openRegisterModal}
