@@ -14,39 +14,45 @@ import LoginModal from './components/auth/LoginModal';
 import RegisterModal from './components/auth/RegisterModal';
 import SettingsModal from './components/settings/SettingsModal'; // Added Import
 import BackgroundAnimation from './components/layout/BackgroundAnimation';
+import KeyboardShortcutsButton from './components/ui/KeyboardShortcutsButton';
 
 // Props for AppLayout
 interface AppLayoutProps {
   openLoginModal: () => void;
   openRegisterModal: () => void;
-  openCollectionsModal: () => void;
   openSettingsModal: () => void;
+  openCollectionsModal: () => void;
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({
   openLoginModal,
   openRegisterModal,
-  openCollectionsModal,
-  openSettingsModal
+  openSettingsModal,
+  openCollectionsModal
 }) => {
-  // isModalOpen from useBookmarks is for the AddBookmarkModal
   const { isModalOpen: isAddBookmarkModalOpen } = useBookmarks();
 
   return (
     <div className="min-h-screen flex flex-col bg-transparent text-white">
       <BackgroundAnimation />
+      {/* Header trên cùng */}
       <Header
         openLoginModal={openLoginModal}
         openRegisterModal={openRegisterModal}
-        openSettingsModal={openSettingsModal} // Pass openSettingsModal to Header
+        openSettingsModal={openSettingsModal}
       />
-      {/* Removed pb-16 md:pb-0 from here, will be on main content views */}
-      <div className="flex-1 flex">
-        <Outlet /> {/* Child route components (BookmarksViewWithSidebar or ProfileView) will render here */}
+      {/* Dưới header là flex ngang: sidebar + main content */}
+      <div className="flex flex-1 min-h-0">
+        <aside className="w-72 flex flex-col border-r border-white/10 bg-sidebar min-h-0 h-auto">
+          <Sidebar />
+        </aside>
+        <div className="flex-1 min-h-0">
+          <Outlet /> {/* Child route components (BookmarksViewWithSidebar or ProfileView) will render here */}
+        </div>
       </div>
       <MobileNavigation
-        openCollectionsModal={openCollectionsModal}
         openSettingsModal={openSettingsModal}
+        openCollectionsModal={openCollectionsModal}
       />
       {/* AddBookmarkModal is controlled by BookmarkContext, so it's rendered if its state is open */}
       {isAddBookmarkModalOpen && <AddBookmarkModal />}
@@ -55,15 +61,50 @@ const AppLayout: React.FC<AppLayoutProps> = ({
 };
 
 const BookmarksViewWithSidebar: React.FC = () => (
-  <> {/* Use Fragment as Sidebar and main are siblings */}
-    <Sidebar />
-    <main className="flex-1 px-4 py-6 md:p-6 pb-16 md:pb-6"> {/* Added bottom padding for mobile nav overlap */}
-      <div className="max-w-6xl mx-auto">
-        <CollectionHeader />
-        <BookmarkGrid />
+  <div className="flex min-h-screen">
+    {/* Sidebar đã nằm ở AppLayout, không render lại ở đây */}
+    {/* Main content */}
+    <div className="flex-1 flex flex-col min-h-screen">
+      {/* Bộ lọc và tiêu đề */}
+      <div className="flex items-center justify-between px-12 pb-2">
+        <div>
+          <CollectionHeader />
+          <div className="text-white/60 text-base">12 bookmarks found</div>
+        </div>
+        <div className="flex items-center gap-3">
+          <select className="rounded-lg px-3 py-2 bg-white/10 text-white/80 text-sm">
+            <option>All time</option>
+            <option>Today</option>
+            <option>This week</option>
+          </select>
+          <select className="rounded-lg px-3 py-2 bg-white/10 text-white/80 text-sm">
+            <option>Most Recent</option>
+            <option>Oldest</option>
+          </select>
+        </div>
       </div>
-    </main>
-  </>
+      {/* Recently Accessed */}
+      <div className="px-12 pb-4">
+        <div className="rounded-2xl bg-white/10 px-6 py-4 flex items-center gap-3 overflow-x-auto">
+          <div className="text-white/80 font-medium mr-2">Recently Accessed</div>
+          {/* Example recently accessed items */}
+          <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">React Documentation</span>
+          <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">Node.js Best Practices</span>
+          <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">Tailwind CSS Documentation</span>
+          <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">TypeScript Handbook</span>
+          <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">Express.js Guide</span>
+        </div>
+      </div>
+      {/* Grid bookmarks */}
+      <main className="flex-1 px-12 pb-8">
+        <BookmarkGrid />
+      </main>
+    </div>
+    {/* Nút nổi/phím tắt ở góc phải dưới */}
+    <div className="fixed bottom-6 right-6 z-50">
+      <KeyboardShortcutsButton />
+    </div>
+  </div>
 );
 
 const ProfileView: React.FC = () => (
@@ -77,8 +118,8 @@ function App() {
   const { currentUser } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
-  const [isCollectionsModalOpen, setIsCollectionsModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const openCollectionsModal = () => {};
 
   const openLoginModal = () => setIsLoginModalOpen(true);
   const closeLoginModal = () => {
@@ -91,8 +132,6 @@ function App() {
     // Potentially navigate or refresh data if needed after registration
   };
 
-  const openCollectionsModal = () => setIsCollectionsModalOpen(true);
-  const closeCollectionsModal = () => setIsCollectionsModalOpen(false);
   const openSettingsModal = () => setIsSettingsModalOpen(true);
   const closeSettingsModal = () => setIsSettingsModalOpen(false);
 
@@ -102,7 +141,6 @@ function App() {
       <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
       <RegisterModal isOpen={isRegisterModalOpen} onClose={closeRegisterModal} />
       <SettingsModal isOpen={isSettingsModalOpen} onClose={closeSettingsModal} /> {/* Render SettingsModal */}
-      {/* <CollectionsModal isOpen={isCollectionsModalOpen} onClose={closeCollectionsModal} /> */}
 
       <Routes>
         <Route
@@ -110,8 +148,8 @@ function App() {
             <AppLayout
               openLoginModal={openLoginModal}
               openRegisterModal={openRegisterModal}
-              openCollectionsModal={openCollectionsModal}
               openSettingsModal={openSettingsModal}
+              openCollectionsModal={openCollectionsModal}
             />
           }
         >
@@ -125,6 +163,7 @@ function App() {
         {/* Routes that don't use AppLayout can be defined outside/sibling to this Route */}
         <Route path="*" element={<Navigate to="/" replace />} /> {/* Fallback for unmatched routes */}
       </Routes>
+      <KeyboardShortcutsButton />
     </BookmarkProvider>
   );
 }

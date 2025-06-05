@@ -14,6 +14,7 @@ interface BookmarkContextType {
   toggleFavorite: (id: number) => void;
   addBookmark: (bookmark: Omit<Bookmark, 'id' | 'createdAt'>) => void;
   deleteBookmark: (id: number) => void;
+  deleteBookmarks: (ids: number[]) => void; // Thêm hàm deleteBookmarks ở đây
   openModal: () => void;
   closeModal: () => void;
   filteredBookmarks: Bookmark[];
@@ -23,6 +24,7 @@ interface BookmarkContextType {
   selectedDateRange: string | null; // e.g., "all", "today", "last7days", "last30days"
   setSelectedDateRange: (range: string | null) => void;
   availableTags: string[];
+  reorderBookmarks: (sourceIdx: number, destIdx: number) => void;
 }
 
 const BookmarkContext = createContext<BookmarkContextType | undefined>(undefined);
@@ -86,6 +88,10 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
     setBookmarks(bookmarks.filter((bookmark) => bookmark.id !== id));
   };
 
+  const deleteBookmarks = (ids: number[]) => {
+    setBookmarks(bookmarks.filter((bookmark) => !ids.includes(bookmark.id)));
+  };
+
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
@@ -139,6 +145,15 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
     return matchesCollection && matchesSearch && matchesTag && matchesDateRange();
   });
 
+  const reorderBookmarks = (sourceIdx: number, destIdx: number) => {
+    setBookmarks((prev) => {
+      const updated = [...prev];
+      const [removed] = updated.splice(sourceIdx, 1);
+      updated.splice(destIdx, 0, removed);
+      return updated;
+    });
+  };
+
   const value = {
     bookmarks,
     collections,
@@ -150,6 +165,7 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
     toggleFavorite,
     addBookmark,
     deleteBookmark,
+    deleteBookmarks, // Thêm vào context
     openModal,
     closeModal,
     // New values for context
@@ -158,7 +174,8 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
     selectedDateRange,
     setSelectedDateRange,
     availableTags,
-    filteredBookmarks
+    filteredBookmarks,
+    reorderBookmarks
   };
 
   return (
