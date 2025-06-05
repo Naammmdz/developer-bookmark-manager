@@ -33,21 +33,27 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   const { isModalOpen: isAddBookmarkModalOpen } = useBookmarks();
 
   return (
-    <div className="min-h-screen flex flex-col bg-transparent text-white">
+    <div className="min-h-screen flex bg-transparent text-white">
       <BackgroundAnimation />
-      {/* Header trên cùng */}
-      <Header
-        openLoginModal={openLoginModal}
-        openRegisterModal={openRegisterModal}
-        openSettingsModal={openSettingsModal}
-      />
-      {/* Dưới header là flex ngang: sidebar + main content */}
-      <div className="flex flex-1 min-h-0">
-        <aside className="w-72 flex flex-col border-r border-white/10 bg-sidebar min-h-0 h-auto">
-          <Sidebar />
-        </aside>
+      {/* Fixed Sidebar */}
+      <aside className="w-64 h-screen fixed top-0 left-0 flex flex-col border-r border-white/10 bg-sidebar">
+        <Sidebar />
+      </aside>
+      {/* Main content area, offset by sidebar width */}
+      <div className="ml-64 flex-1 flex flex-col min-h-0">
+        {/* Header within the main content area */}
+        <Header
+          openLoginModal={openLoginModal}
+          openRegisterModal={openRegisterModal}
+          openSettingsModal={openSettingsModal}
+        />
+        {/* Outlet for child route components */}
         <div className="flex-1 min-h-0">
-          <Outlet /> {/* Child route components (BookmarksViewWithSidebar or ProfileView) will render here */}
+          <Outlet /> {/* BookmarksViewWithSidebar or ProfileView will render here */}
+        </div>
+        {/* KeyboardShortcutsButton consolidated here */}
+        <div className="fixed bottom-6 right-6 z-50">
+          <KeyboardShortcutsButton />
         </div>
       </div>
       <MobileNavigation
@@ -61,53 +67,50 @@ const AppLayout: React.FC<AppLayoutProps> = ({
 };
 
 const BookmarksViewWithSidebar: React.FC = () => (
-  <div className="flex min-h-screen">
-    {/* Sidebar đã nằm ở AppLayout, không render lại ở đây */}
-    {/* Main content */}
-    <div className="flex-1 flex flex-col min-h-screen">
-      {/* Bộ lọc và tiêu đề */}
-      <div className="flex items-center justify-between px-12 pb-2">
-        <div>
-          <CollectionHeader />
-          <div className="text-white/60 text-base">12 bookmarks found</div>
-        </div>
-        <div className="flex items-center gap-3">
-          <select className="rounded-lg px-3 py-2 bg-white/10 text-white/80 text-sm">
-            <option>All time</option>
-            <option>Today</option>
-            <option>This week</option>
-          </select>
-          <select className="rounded-lg px-3 py-2 bg-white/10 text-white/80 text-sm">
-            <option>Most Recent</option>
-            <option>Oldest</option>
-          </select>
-        </div>
+  // Root element with p-6 padding, sidebar and header are removed
+  <div className="flex-1 flex flex-col min-h-screen p-6">
+    {/* Bộ lọc và tiêu đề */}
+    <div className="flex items-center justify-between pb-2">
+      <div>
+        <CollectionHeader />
+        <div className="text-white/60 text-base">12 bookmarks found</div>
       </div>
-      {/* Recently Accessed */}
-      <div className="px-12 pb-4">
-        <div className="rounded-2xl bg-white/10 px-6 py-4 flex items-center gap-3 overflow-x-auto">
-          <div className="text-white/80 font-medium mr-2">Recently Accessed</div>
-          {/* Example recently accessed items */}
-          <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">React Documentation</span>
-          <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">Node.js Best Practices</span>
-          <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">Tailwind CSS Documentation</span>
-          <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">TypeScript Handbook</span>
-          <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">Express.js Guide</span>
-        </div>
+      <div className="flex items-center gap-3">
+        <select className="rounded-lg px-3 py-2 bg-white/10 text-white/80 text-sm">
+          <option>All time</option>
+          <option>Today</option>
+          <option>This week</option>
+        </select>
+        <select className="rounded-lg px-3 py-2 bg-white/10 text-white/80 text-sm">
+          <option>Most Recent</option>
+          <option>Oldest</option>
+        </select>
       </div>
-      {/* Grid bookmarks */}
-      <main className="flex-1 px-12 pb-8">
-        <BookmarkGrid />
-      </main>
     </div>
-    {/* Nút nổi/phím tắt ở góc phải dưới */}
-    <div className="fixed bottom-6 right-6 z-50">
-      <KeyboardShortcutsButton />
+    {/* Recently Accessed */}
+    <div className="pb-4">
+      <div className="rounded-2xl bg-white/10 px-6 py-4 flex items-center gap-3 overflow-x-auto">
+        <div className="text-white/80 font-medium mr-2">Recently Accessed</div>
+        {/* Example recently accessed items */}
+        <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">React Documentation</span>
+        <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">Node.js Best Practices</span>
+        <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">Tailwind CSS Documentation</span>
+        <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">TypeScript Handbook</span>
+        <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">Express.js Guide</span>
+      </div>
     </div>
+    {/* Grid bookmarks */}
+    <main className="flex-1 pb-8"> {/* Adjusted padding, p-6 handles others */}
+      <BookmarkGrid />
+    </main>
+    {/* KeyboardShortcutsButton moved to AppLayout */}
   </div>
 );
 
 const ProfileView: React.FC = () => (
+    // Adjusted padding for consistency if needed, though p-6 is now on AppLayout's content area.
+    // For ProfileView, it might be better to let it control its own padding if it's not meant to be full-width like bookmarks.
+    // Keeping its existing padding for now.
     <main className="flex-1 w-full px-4 py-6 md:p-6 flex justify-center items-start pt-6 md:pt-10 pb-16 md:pb-6">
         <ProfilePage />
     </main>
@@ -163,7 +166,7 @@ function App() {
         {/* Routes that don't use AppLayout can be defined outside/sibling to this Route */}
         <Route path="*" element={<Navigate to="/" replace />} /> {/* Fallback for unmatched routes */}
       </Routes>
-      <KeyboardShortcutsButton />
+      {/* KeyboardShortcutsButton removed from here, now in AppLayout */}
     </BookmarkProvider>
   );
 }
