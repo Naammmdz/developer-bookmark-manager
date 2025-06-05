@@ -12,14 +12,15 @@ interface SidebarItemProps {
   isActive: boolean;
   onClick: () => void;
   isStaticCollection?: boolean; // Flag to manage transition delays differently
+  itemIndex?: number; // Added for improved animation delay calculation
 }
 
-const SidebarItem: React.FC<SidebarItemProps> = ({ id, icon, name, count, isActive, onClick, isStaticCollection }) => (
+const SidebarItem: React.FC<SidebarItemProps> = ({ id, icon, name, count, isActive, onClick, isStaticCollection, itemIndex }) => (
   <motion.button
     key={id}
     initial={{ opacity: 0, x: -10 }}
     animate={{ opacity: 1, x: 0 }}
-    transition={{ duration: 0.2, delay: isStaticCollection ? 0.1 + (parseInt(id.split('_')[1] || '0') * 0.03) : 0 }} // Stagger static collections
+    transition={{ duration: 0.2, delay: isStaticCollection && typeof itemIndex === 'number' ? 0.1 + (itemIndex * 0.03) : 0 }} // Use itemIndex for delay
     onClick={onClick}
     className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-left transition-all duration-200 ease-in-out
                 ${isActive
@@ -113,6 +114,7 @@ const Sidebar: React.FC = () => {
                 isActive={activeCollection === sColl.id}
                 onClick={() => setActiveCollection(sColl.id)}
                 isStaticCollection={true} // For staggered animation
+                itemIndex={index} // Pass the index as itemIndex
               />
             );
           })}
