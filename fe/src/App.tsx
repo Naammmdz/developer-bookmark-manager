@@ -14,6 +14,7 @@ import BookmarkGrid from './components/bookmark/BookmarkGrid';
 // CollectionHeader removed as it's no longer used in BookmarksViewWithSidebar
 import MobileNavigation from './components/layout/MobileNavigation';
 import AddBookmarkModal from './components/bookmark/AddBookmarkModal';
+import AddCollectionModal from './components/collection/AddCollectionModal'; // Import AddCollectionModal
 import LoginModal from './components/auth/LoginModal';
 import RegisterModal from './components/auth/RegisterModal';
 import SettingsModal from './components/settings/SettingsModal';
@@ -69,8 +70,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   openSettingsModal,
   openCollectionsModal,
 }) => {
-  const { isModalOpen: isAddBookmarkModalOpen, collectionData } =
-    useBookmarks();
+  const {
+    isModalOpen: isAddBookmarkModalOpen,
+    collectionData,
+    isAddCollectionModalOpen, // Destructure new state and functions
+    closeAddCollectionModal,
+    addCollection
+  } = useBookmarks();
 
   const stats = React.useMemo(() => {
     const cd = collectionData || {}; // Handle initial undefined state
@@ -180,6 +186,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({
 
       {/* AddBookmarkModal is controlled by BookmarkContext, so it's rendered if its state is open */}
       {isAddBookmarkModalOpen && <AddBookmarkModal />}
+      {/* AddCollectionModal controlled by BookmarkContext */}
+      {isAddCollectionModalOpen && (
+        <AddCollectionModal
+          isOpen={isAddCollectionModalOpen}
+          onClose={closeAddCollectionModal}
+          onAddCollection={addCollection}
+        />
+      )}
     </div>
   );
 };

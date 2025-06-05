@@ -27,6 +27,9 @@ interface BookmarkContextType {
   deleteBookmarks: (ids: number[]) => void;
   reorderBookmarks: (movedBookmarkId: number, targetBookmarkId: number | null) => void; // Updated signature
   addCollection: (name: string, icon: string) => void; // Added for adding new collections
+  isAddCollectionModalOpen: boolean;
+  openAddCollectionModal: () => void;
+  closeAddCollectionModal: () => void;
 }
 
 const BookmarkContext = createContext<BookmarkContextType | undefined>(undefined);
@@ -54,6 +57,7 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
   const [activeCollection, setActiveCollection] = useState<string>('all'); // Initialized to 'all'
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isAddCollectionModalOpen, setIsAddCollectionModalOpen] = useState<boolean>(false);
 
   const toggleFavorite = (id: number) => {
     setBookmarks(
@@ -89,6 +93,9 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
+
+  const openAddCollectionModal = () => setIsAddCollectionModalOpen(true);
+  const closeAddCollectionModal = () => setIsAddCollectionModalOpen(false);
 
   const addCollection = (name: string, icon: string) => {
     const newId = 'coll_' + String(Date.now());
@@ -195,6 +202,9 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
     deleteBookmarks,
     reorderBookmarks,
     addCollection, // Added to context value
+    isAddCollectionModalOpen,
+    openAddCollectionModal,
+    closeAddCollectionModal,
     // Removed: filteredBookmarks, selectedTag, setSelectedTag, selectedDateRange, setSelectedDateRange, availableTags
   };
 

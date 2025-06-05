@@ -60,25 +60,10 @@ const Sidebar: React.FC = () => {
     setActiveCollection,
     collectionData,
     collections: staticCollections, // Renamed for clarity, this is sampleCollections
-    addCollection // Destructure addCollection function
+    openAddCollectionModal // Destructure openAddCollectionModal, remove addCollection
   } = useBookmarks();
 
-  const handleAddNewCollection = () => {
-    const name = window.prompt("Enter new collection name:");
-    if (name === null) return; // User cancelled
-    if (name.trim() === "") {
-      alert("Collection name cannot be empty.");
-      return;
-    }
-
-    const icon = window.prompt(`Enter icon for "${name.trim()}" (e.g., an emoji like '📚' or '✨'):`);
-    if (icon === null) return; // User cancelled
-    if (icon.trim() === "") {
-      alert("Collection icon cannot be empty."); // Basic validation for icon
-      return;
-    }
-    addCollection(name.trim(), icon.trim());
-  };
+  // handleAddNewCollection (using window.prompt) is now removed.
 
   // Ensure collectionData is available
   if (!collectionData || Object.keys(collectionData).length === 0) {
@@ -119,7 +104,7 @@ const Sidebar: React.FC = () => {
           <div className="flex items-center justify-between pt-2 pb-1 px-3 mb-1">
             <h2 className="text-xs text-white/40 font-semibold uppercase">My Collections</h2>
             <button
-              onClick={handleAddNewCollection}
+              onClick={openAddCollectionModal} // Changed to open the modal
               className="text-primary/80 hover:text-primary p-0.5 rounded-full hover:bg-primary/10 transition-colors"
               title="Add new collection"
             >
