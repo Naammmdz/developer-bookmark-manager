@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useBookmarks, CollectionWithItems } from '../../context/BookmarkContext'; // Import CollectionWithItems
-// Lucide icons removed as per assumption that collectionData.icon is an emoji/string
+import { PlusCircle } from 'lucide-react'; // Added for the "Add Collection" button
 
 // Define SidebarItemProps and SidebarItem inline functional component
 interface SidebarItemProps {
@@ -59,8 +59,26 @@ const Sidebar: React.FC = () => {
     activeCollection,
     setActiveCollection,
     collectionData,
-    collections: staticCollections // Renamed for clarity, this is sampleCollections
+    collections: staticCollections, // Renamed for clarity, this is sampleCollections
+    addCollection // Destructure addCollection function
   } = useBookmarks();
+
+  const handleAddNewCollection = () => {
+    const name = window.prompt("Enter new collection name:");
+    if (name === null) return; // User cancelled
+    if (name.trim() === "") {
+      alert("Collection name cannot be empty.");
+      return;
+    }
+
+    const icon = window.prompt(`Enter icon for "${name.trim()}" (e.g., an emoji like '📚' or '✨'):`);
+    if (icon === null) return; // User cancelled
+    if (icon.trim() === "") {
+      alert("Collection icon cannot be empty."); // Basic validation for icon
+      return;
+    }
+    addCollection(name.trim(), icon.trim());
+  };
 
   // Ensure collectionData is available
   if (!collectionData || Object.keys(collectionData).length === 0) {
@@ -72,7 +90,7 @@ const Sidebar: React.FC = () => {
       </motion.aside>
     );
   }
-  
+
   const allData = collectionData['all'];
   const favoritesData = collectionData['favorites'];
   const recentlyAddedData = collectionData['recently_added'];
@@ -98,8 +116,15 @@ const Sidebar: React.FC = () => {
             />
           )}
 
-          <div className="pt-2 pb-1">
-            <h2 className="text-xs text-white/40 font-semibold uppercase px-3 mb-1">My Collections</h2>
+          <div className="flex items-center justify-between pt-2 pb-1 px-3 mb-1">
+            <h2 className="text-xs text-white/40 font-semibold uppercase">My Collections</h2>
+            <button
+              onClick={handleAddNewCollection}
+              className="text-primary/80 hover:text-primary p-0.5 rounded-full hover:bg-primary/10 transition-colors"
+              title="Add new collection"
+            >
+              <PlusCircle size={16} />
+            </button>
           </div>
           {staticCollections.map((sColl, index) => {
             const data = collectionData[sColl.id];

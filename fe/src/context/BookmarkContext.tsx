@@ -26,6 +26,7 @@ interface BookmarkContextType {
   deleteBookmark: (id: number) => void;
   deleteBookmarks: (ids: number[]) => void;
   reorderBookmarks: (movedBookmarkId: number, targetBookmarkId: number | null) => void; // Updated signature
+  addCollection: (name: string, icon: string) => void; // Added for adding new collections
 }
 
 const BookmarkContext = createContext<BookmarkContextType | undefined>(undefined);
@@ -45,8 +46,8 @@ interface BookmarkProviderProps {
 export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
   const { currentUser } = useAuth();
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(sampleBookmarks);
-  // Filter out special collection names during initial state setting
-  const [staticCollections] = useState<Collection[]>(() => {
+  // Filter out special collection names during initial state setting and allow updates
+  const [staticCollections, setStaticCollections] = useState<Collection[]>(() => {
     const excludedNames = ['All Bookmarks', 'Favorites', 'Recently Added'];
     return sampleCollections.filter(col => !excludedNames.includes(col.name));
   });
@@ -88,6 +89,12 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
+
+  const addCollection = (name: string, icon: string) => {
+    const newId = 'coll_' + String(Date.now());
+    const newCollection: Collection = { id: newId, name, icon };
+    setStaticCollections(prevCollections => [...prevCollections, newCollection]);
+  };
 
   const collectionData = useMemo(() => {
     const data: { [key: string]: CollectionWithItems } = {};
@@ -187,6 +194,7 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
     deleteBookmark,
     deleteBookmarks,
     reorderBookmarks,
+    addCollection, // Added to context value
     // Removed: filteredBookmarks, selectedTag, setSelectedTag, selectedDateRange, setSelectedDateRange, availableTags
   };
 
