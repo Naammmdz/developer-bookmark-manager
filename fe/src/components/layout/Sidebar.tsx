@@ -1,73 +1,61 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useBookmarks } from '../../context/BookmarkContext';
-import { Bookmark, Layers, Server, Palette, FileText, Heart, Clock } from 'lucide-react';
-import GlassCard from '../ui/GlassCard';
+import CollectionItem from './CollectionItem';
+import QuickAccessItem from './QuickAccessItem';
+import StorageIndicator from './StorageIndicator';
+// Icons for CollectionItems would typically be handled within CollectionItem or passed as props.
+// For QuickAccessItem, icons are passed as string props.
 
 const Sidebar: React.FC = () => {
-  const { collections, activeCollection, setActiveCollection } = useBookmarks();
-  
-  // Map collection names to icons
-  const getIcon = (iconName: string) => {
-    const icons: { [key: string]: React.ReactNode } = {
-      'Bookmark': <Bookmark size={18} />,
-      'Layers': <Layers size={18} />,
-      'Server': <Server size={18} />,
-      'Palette': <Palette size={18} />,
-      'FileText': <FileText size={18} />,
-      'Heart': <Heart size={18} />,
-      'Clock': <Clock size={18} />
-    };
-    
-    return icons[iconName] || <Bookmark size={18} />;
-  };
+  // const { collections, activeCollection, setActiveCollection } = useBookmarks(); // Keep commented for now
+
+  // glass-card classes: bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl shadow-lg
+  const glassCardClasses = "bg-white/5 backdrop-filter backdrop-blur-lg border border-white/10 shadow-lg";
+
 
   return (
     <motion.aside
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.2 }}
-      className="w-64 hidden md:block h-[calc(100vh-76px)] overflow-y-auto sticky top-[76px]"
+      className={`fixed left-0 top-0 h-screen w-64 ${glassCardClasses} rounded-xl overflow-y-auto p-0`} // Applied glass-card, changed to rounded-xl
     >
-      <GlassCard className="h-full p-4 m-4">
-        <h2 className="text-white/90 font-medium mb-4 px-2">Collections</h2>
+      {/* Collections Section */}
+      <div className="p-6 text-white/90">
+        <h2 className="text-lg font-semibold mb-4">Collections</h2>
+
+        {/* "All Bookmarks" item, styled like an active CollectionItem */}
+        <div
+          className={`flex justify-between items-center p-3 rounded-lg cursor-pointer transition-colors duration-200 mb-3 bg-white/20 hover:bg-white/30`} // Base: p-2, hover:bg-white/10. Active: bg-white/20. All: p-3
+          // onClick={() => setActiveCollection('All')} // Example action
+        >
+          <span>All</span>
+          <span className="bg-gray-700 text-xs px-2 py-0.5 rounded-full">12</span> {/* Consistent badge style */}
+        </div>
         
-        <nav>
-          <ul className="space-y-1">
-            {collections.map((collection, index) => (
-              <motion.li
-                key={collection.id}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 + index * 0.05 }}
-              >
-                <button
-                  className={`
-                    w-full flex items-center gap-3 px-3 py-2 rounded-lg 
-                    transition-all duration-300 text-left
-                    ${activeCollection === collection.name 
-                      ? 'bg-white/20 text-white' 
-                      : 'text-white/70 hover:bg-white/10'}
-                  `}
-                  onClick={() => setActiveCollection(collection.name)}
-                >
-                  <span className={`
-                    ${activeCollection === collection.name 
-                      ? 'text-primary' 
-                      : 'text-white/60'}
-                  `}>
-                    {getIcon(collection.icon)}
-                  </span>
-                  <span>{collection.name}</span>
-                  <span className="ml-auto bg-white/10 text-white/70 text-xs px-2 py-0.5 rounded-full">
-                    {collection.count}
-                  </span>
-                </button>
-              </motion.li>
-            ))}
-          </ul>
-        </nav>
-      </GlassCard>
+        <div className="space-y-1"> {/* Adjusted space-y to 1 for closer items */}
+          <CollectionItem name="Frontend Resources" count={3} isActive={false} />
+          <CollectionItem name="Backend Resources" count={3} />
+          <CollectionItem name="CSS Resources" count={3} />
+          <CollectionItem name="DevOps Tools" count={2} />
+          <CollectionItem name="Documentation" count={1} />
+        </div>
+      </div>
+
+      {/* Quick Access Section */}
+      <div className="p-6 pt-0 text-white/90">
+        <h3 className="text-sm font-medium mb-3">Quick Access</h3>
+        <div className="space-y-1"> {/* Adjusted space-y to 1 */}
+          <QuickAccessItem icon="⭐" label="Favorites" count={6} />
+          <QuickAccessItem icon="🌐" label="Public" count={9} />
+          <QuickAccessItem icon="🕒" label="Recent" count={10} />
+        </div>
+      </div>
+
+      {/* Storage Usage */}
+      <div className="p-6 pt-0 text-white/90">
+        <StorageIndicator used="6 MB" total="30 MB" percentage={20} />
+      </div>
     </motion.aside>
   );
 };
