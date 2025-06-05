@@ -25,7 +25,7 @@ interface BookmarkContextType {
   addBookmark: (bookmark: Omit<Bookmark, 'id' | 'createdAt'>) => void;
   deleteBookmark: (id: number) => void;
   deleteBookmarks: (ids: number[]) => void;
-  reorderBookmarks: (sourceIdx: number, destIdx: number) => void; // Kept as it operates on raw bookmarks
+  reorderBookmarks: (movedBookmarkId: number, targetBookmarkId: number | null) => void; // Updated signature
 }
 
 const BookmarkContext = createContext<BookmarkContextType | undefined>(undefined);
@@ -143,17 +143,31 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
 
   // Reorder bookmarks - this operates on the base `bookmarks` array.
   // `collectionData` will update automatically due to `useMemo` dependency on `bookmarks`.
-  const reorderBookmarks = (sourceIdx: number, destIdx: number) => {
-    setBookmarks((prev) => {
-      const updated = [...prev]; // Create a new array
-      // Find the actual bookmarks being moved based on currently displayed items if activeCollection is not 'all'
-      // This simple reorder works correctly if sourceIdx/destIdx are for the 'all' bookmarks view.
-      // If they are indices from a filtered/specific collection view, this logic might need adjustment
-      // or the DnD should provide indices relative to the `bookmarks` array.
-      // For now, assuming indices are relative to the full `bookmarks` array as `collectionData` is derived.
-      const [removed] = updated.splice(sourceIdx, 1);
-      updated.splice(destIdx, 0, removed);
-      return updated;
+  const reorderBookmarks = (movedBookmarkId: number, targetBookmarkId: number | null) => {
+    setBookmarks(prevBookmarks => {
+      const movedItemIndex = prevBookmarks.findIndex(bm => bm.id === movedBookmarkId);
+      if (movedItemIndex === -1) {
+        console.warn(`reorderBookmarks: movedItem with id ${movedBookmarkId} not found.`);
+        return prevBookmarks; // Return original if item not found
+      }
+      const movedItem = prevBookmarks[movedItemIndex];
+
+      let newBookmarks = prevBookmarks.filter(bm => bm.id !== movedBookmarkId);
+
+      if (targetBookmarkId === null) { // Dropped at the end
+        newBookmarks.push(movedItem);
+      } else {
+        const targetItemIndexInNewArray = newBookmarks.findIndex(bm => bm.id === targetBookmarkId);
+        if (targetItemIndexInNewArray !== -1) {
+          newBookmarks.splice(targetItemIndexInNewArray, 0, movedItem);
+        } else {
+          // Fallback: if targetId not found (should ideally not happen if IDs are correct from grid)
+          // or if it was the movedItem itself (already filtered out), append to end.
+          console.warn(`reorderBookmarks: targetItem with id ${targetBookmarkId} not found in remaining items. Appending to end.`);
+          newBookmarks.push(movedItem);
+        }
+      }
+      return newBookmarks;
     });
   };
 

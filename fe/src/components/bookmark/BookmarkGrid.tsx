@@ -40,7 +40,7 @@ const BookmarkPreviewModal: React.FC<BookmarkPreviewModalProps> = ({ bookmark, o
 
 interface BookmarkGridProps {
   bookmarks: Bookmark[];
-  reorderBookmarks: (sourceIdx: number, destIdx: number) => void;
+  reorderBookmarks: (movedBookmarkId: number, targetBookmarkId: number | null) => void; // Updated signature
   deleteBookmarks: (ids: number[]) => void;
   // activeCollection is not needed here anymore as parent handles empty state based on it
 }
@@ -62,14 +62,28 @@ const BookmarkGrid: React.FC<BookmarkGridProps> = ({ bookmarks, reorderBookmarks
   };
 
   const onDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
-    if (result.source.index === result.destination.index) return;
-    // Important: reorderBookmarks expects indices relative to the *original unfiltered list*
-    // if it's modifying the source of truth in the context directly.
-    // If `bookmarks` prop is already filtered, this might lead to issues
-    // unless `reorderBookmarks` in context is aware of the currently displayed (sub)set.
-    // For now, assuming `reorderBookmarks` handles this or expects indices from the currently displayed list.
-    reorderBookmarks(result.source.index, result.destination.index);
+    if (!result.destination || !result.source) return;
+    if (result.source.index === result.destination.index && result.source.droppableId === result.destination.droppableId) return;
+
+    const movedItem = bookmarks[result.source.index];
+    if (!movedItem) {
+      console.error("BookmarkGrid: Moved item not found at source index", result.source.index);
+      return;
+    }
+    const movedItemId = movedItem.id;
+
+    // Create a list of items excluding the moved item, to determine the target based on visual drop position
+    const remainingItems = bookmarks.filter(bm => bm.id !== movedItemId);
+
+    let targetItemId: number | null = null;
+    // If the destination index is within the bounds of the remaining items, it's the ID of that item.
+    if (result.destination.index < remainingItems.length) {
+      targetItemId = remainingItems[result.destination.index].id;
+    }
+    // If result.destination.index === remainingItems.length, it means item is dropped at the very end.
+    // In this case, targetItemId remains null, signifying "append to end".
+
+    reorderBookmarks(movedItemId, targetItemId);
   };
 
   // Empty state is now handled by the parent component (BookmarksViewWithSidebar)
