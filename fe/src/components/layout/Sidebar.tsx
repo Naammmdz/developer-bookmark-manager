@@ -1,80 +1,148 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useBookmarks } from '../../context/BookmarkContext';
-import { Bookmark, Layers, Server, Palette, FileText, Heart, Clock } from 'lucide-react';
-import GlassCard from '../ui/GlassCard';
+import { useBookmarks, CollectionWithItems } from '../../context/BookmarkContext'; // Import CollectionWithItems
+// Lucide icons removed as per assumption that collectionData.icon is an emoji/string
+
+// Define SidebarItemProps and SidebarItem inline functional component
+interface SidebarItemProps {
+  id: string;
+  icon: string; // Emoji or simple character
+  name: string;
+  count: number;
+  isActive: boolean;
+  onClick: () => void;
+  isStaticCollection?: boolean; // Flag to manage transition delays differently
+}
+
+const SidebarItem: React.FC<SidebarItemProps> = ({ id, icon, name, count, isActive, onClick, isStaticCollection }) => (
+  <motion.button
+    key={id}
+    initial={{ opacity: 0, x: -10 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ duration: 0.2, delay: isStaticCollection ? 0.1 + (parseInt(id.split('_')[1] || '0') * 0.03) : 0 }} // Stagger static collections
+    onClick={onClick}
+    className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-left transition-all duration-200 ease-in-out
+                ${isActive
+                  ? 'bg-primary/20 text-primary font-medium shadow-sm shadow-primary/30'
+                  : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
+  >
+    <span className="w-5 h-5 flex items-center justify-center text-lg">{icon}</span>
+    <span className="flex-1 truncate text-sm font-medium">{name}</span>
+    {count > 0 && (
+      <span className={`text-xs px-1.5 py-0.5 rounded-full font-mono
+                       ${isActive ? 'bg-primary text-white' : 'bg-white/10 text-white/60'}`}>
+        {count}
+      </span>
+    )}
+  </motion.button>
+);
+
+// Temporary icon mapping for this step
+const getEmojiForIconName = (iconName?: string): string => {
+  if (!iconName) return '📁'; // Default folder icon
+  switch (iconName.toLowerCase()) {
+    case 'archive': return '🗂️';
+    case 'heart': return '❤️';
+    case 'clock': return '🕒';
+    case 'bookmark': return '🔖';
+    case 'layers': return '📚';
+    case 'server': return '☁️';
+    case 'palette': return '🎨';
+    case 'filetext': return '📄';
+    default: return iconName.charAt(0).toUpperCase() || '📁'; // Fallback to first letter or folder
+  }
+};
 
 const Sidebar: React.FC = () => {
-  const { collections, activeCollection, setActiveCollection } = useBookmarks();
+  const {
+    activeCollection,
+    setActiveCollection,
+    collectionData,
+    collections: staticCollections // Renamed for clarity, this is sampleCollections
+  } = useBookmarks();
+
+  // Ensure collectionData is available
+  if (!collectionData || Object.keys(collectionData).length === 0) {
+    return (
+      <motion.aside className="hidden md:block">
+        <div className="h-full flex flex-col p-6 items-center justify-center">
+          <p className="text-white/50">Loading collections...</p>
+        </div>
+      </motion.aside>
+    );
+  }
   
-  // Map collection names to icons
-  const getIcon = (iconName: string) => {
-    const icons: { [key: string]: React.ReactNode } = {
-      'Bookmark': <Bookmark size={18} />,
-      'Layers': <Layers size={18} />,
-      'Server': <Server size={18} />,
-      'Palette': <Palette size={18} />,
-      'FileText': <FileText size={18} />,
-      'Heart': <Heart size={18} />,
-      'Clock': <Clock size={18} />
-    };
-    
-    return icons[iconName] || <Bookmark size={18} />;
-  };
+  const allData = collectionData['all'];
+  const favoritesData = collectionData['favorites'];
+  const recentlyAddedData = collectionData['recently_added'];
 
   return (
     <motion.aside
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.2 }}
-      className="hidden md:block" // Removed redundant layout classes, AppLayout handles them
+      transition={{ delay: 0.1, duration: 0.3 }} // Adjusted main aside transition
+      className="hidden md:block"
     >
-      <div className="h-full flex flex-col"> {/* New root div for internal sidebar structure */}
+      <div className="h-full flex flex-col">
         {/* Scrollable Collections Area */}
-        <div className="flex-1 p-6 overflow-y-auto">
-          <h2 className="text-white/90 font-medium mb-4 px-2">Collections</h2>
-          <nav>
-            <ul className="space-y-1">
-              {collections.map((collection, index) => (
-                <motion.li
-                  key={collection.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 + index * 0.05 }}
-                >
-                  <button
-                    className={`
-                      w-full flex items-center gap-3 px-3 py-2 rounded-lg
-                      transition-all duration-300 text-left
-                      ${activeCollection === collection.name
-                        ? 'bg-white/20 text-white'
-                        : 'text-white/70 hover:bg-white/10'}
-                    `}
-                    onClick={() => setActiveCollection(collection.name)}
-                  >
-                    <span className={`
-                      ${activeCollection === collection.name
-                        ? 'text-primary'
-                        : 'text-white/60'}
-                    `}>
-                      {getIcon(collection.icon)}
-                    </span>
-                    <span>{collection.name}</span>
-                    <span className="ml-auto bg-white/10 text-white/70 text-xs px-2 py-0.5 rounded-full">
-                      {collection.count}
-                    </span>
-                  </button>
-                </motion.li>
-              ))}
-            </ul>
-          </nav>
+        <div className="flex-1 p-4 space-y-1 overflow-y-auto"> {/* Reduced padding, added space-y-1 */}
+          {allData && (
+            <SidebarItem
+              id="all"
+              icon={getEmojiForIconName(allData.icon)}
+              name={allData.name}
+              count={allData.count}
+              isActive={activeCollection === 'all'}
+              onClick={() => setActiveCollection('all')}
+            />
+          )}
+
+          <div className="pt-2 pb-1">
+            <h2 className="text-xs text-white/40 font-semibold uppercase px-3 mb-1">My Collections</h2>
+          </div>
+          {staticCollections.map((sColl, index) => {
+            const data = collectionData[sColl.id];
+            if (!data) return null; // Skip if data for this static collection isn't in collectionData
+            return (
+              <SidebarItem
+                key={sColl.id} // Use sColl.id for key as it's from the map
+                id={sColl.id}
+                icon={getEmojiForIconName(sColl.icon)} // Use sColl.icon for the specific collection
+                name={sColl.name} // Use sColl.name for consistency from static definition
+                count={data.count}
+                isActive={activeCollection === sColl.id}
+                onClick={() => setActiveCollection(sColl.id)}
+                isStaticCollection={true} // For staggered animation
+              />
+            );
+          })}
         </div>
 
         {/* Quick Access Area */}
-        <div className="p-6 border-t border-white/10">
-          <h3 className="text-white/90 font-medium mb-3 px-2">Quick Access</h3>
-          {/* Placeholder for Quick Access items */}
-          <p className="text-white/60 text-sm px-2">Links to frequently used items or settings could go here.</p>
+        <div className="p-4 border-t border-white/10 space-y-1"> {/* Reduced padding, added space-y-1 */}
+           <div className="pt-1 pb-1">
+            <h2 className="text-xs text-white/40 font-semibold uppercase px-3 mb-1">Quick Access</h2>
+          </div>
+          {favoritesData && (
+            <SidebarItem
+              id="favorites"
+              icon={getEmojiForIconName(favoritesData.icon)}
+              name={favoritesData.name}
+              count={favoritesData.count}
+              isActive={activeCollection === 'favorites'}
+              onClick={() => setActiveCollection('favorites')}
+            />
+          )}
+          {recentlyAddedData && (
+            <SidebarItem
+              id="recently_added"
+              icon={getEmojiForIconName(recentlyAddedData.icon)}
+              name={recentlyAddedData.name}
+              count={recentlyAddedData.count}
+              isActive={activeCollection === 'recently_added'}
+              onClick={() => setActiveCollection('recently_added')}
+            />
+          )}
         </div>
       </div>
     </motion.aside>

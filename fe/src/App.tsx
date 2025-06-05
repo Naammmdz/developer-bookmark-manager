@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react'; // Added useMemo
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { BookmarkProvider, useBookmarks } from './context/BookmarkContext';
+import { BookmarkProvider, useBookmarks, CollectionWithItems } from './context/BookmarkContext'; // Added CollectionWithItems
 import { useAuth } from './context/AuthContext';
 
 import ProfilePage from './pages/ProfilePage';
@@ -15,7 +15,23 @@ import RegisterModal from './components/auth/RegisterModal';
 import SettingsModal from './components/settings/SettingsModal'; // Added Import
 import BackgroundAnimation from './components/layout/BackgroundAnimation';
 import KeyboardShortcutsButton from './components/ui/KeyboardShortcutsButton';
-import { Archive, FolderKanban, Heart, Globe, Filter, ArrowUpDown } from 'lucide-react'; // Icons for Stats Cards & BookmarksView
+import { Archive, FolderKanban, Heart, Globe, Filter, ArrowUpDown, PlusCircle, ListPlus } from 'lucide-react'; // Added PlusCircle, ListPlus
+
+// Helper function for mapping icon names to emojis for page titles
+const getEmojiIcon = (iconName?: string): string => {
+  if (!iconName) return '📁'; // Default
+  switch (iconName.toLowerCase()) {
+    case 'archive': return '🗂️'; // For 'All Bookmarks'
+    case 'heart': return '❤️';   // For 'Favorites'
+    case 'clock': return '🕒';   // For 'Recently Added'
+    case 'bookmark': return '🔖';
+    case 'layers': return '📚';
+    case 'server': return '☁️';
+    case 'palette': return '🎨';
+    case 'filetext': return '📄';
+    default: return '✨'; // Default for other dynamic collections
+  }
+};
 
 // Props for AppLayout
 interface AppLayoutProps {
@@ -31,7 +47,23 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   openSettingsModal,
   openCollectionsModal
 }) => {
-  const { isModalOpen: isAddBookmarkModalOpen } = useBookmarks();
+  const { isModalOpen: isAddBookmarkModalOpen, collectionData } = useBookmarks();
+
+  const stats = React.useMemo(() => {
+    const cd = collectionData || {}; // Handle initial undefined state
+
+    const totalBookmarksStat = cd.all?.count || 0;
+
+    const collectionsStat = Object.values(cd as {[key: string]: CollectionWithItems}) // Type assertion for filter
+      .filter(col => col.id !== 'all' && col.id !== 'favorites' && col.id !== 'recently_added').length;
+
+    const favoritesStat = cd.favorites?.count || 0;
+
+    // Placeholder for publicStat, e.g., 30% of total (rounded down)
+    const publicStat = Math.floor(totalBookmarksStat * 0.3);
+
+    return { totalBookmarksStat, collectionsStat, favoritesStat, publicStat };
+  }, [collectionData]);
 
   return (
     <div className="flex min-h-screen text-white"> {/* Root div */}
@@ -62,7 +94,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                 <p className="text-sm text-white/70">Total Bookmarks</p>
                 <Archive size={20} className="text-primary" />
               </div>
-              <p className="text-3xl font-semibold text-white">1,234</p>
+              <p className="text-3xl font-semibold text-white">{stats.totalBookmarksStat}</p>
             </div>
             {/* Card 2: Collections */}
             <div className="bg-black/20 backdrop-blur-lg border border-white/10 rounded-xl p-6">
@@ -70,7 +102,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                 <p className="text-sm text-white/70">Collections</p>
                 <FolderKanban size={20} className="text-primary" />
               </div>
-              <p className="text-3xl font-semibold text-white">23</p>
+              <p className="text-3xl font-semibold text-white">{stats.collectionsStat}</p>
             </div>
             {/* Card 3: Favorites */}
             <div className="bg-black/20 backdrop-blur-lg border border-white/10 rounded-xl p-6">
@@ -78,7 +110,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                 <p className="text-sm text-white/70">Favorites</p>
                 <Heart size={20} className="text-primary" />
               </div>
-              <p className="text-3xl font-semibold text-white">128</p>
+              <p className="text-3xl font-semibold text-white">{stats.favoritesStat}</p>
             </div>
             {/* Card 4: Public */}
             <div className="bg-black/20 backdrop-blur-lg border border-white/10 rounded-xl p-6">
@@ -86,7 +118,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                 <p className="text-sm text-white/70">Public</p>
                 <Globe size={20} className="text-primary" />
               </div>
-              <p className="text-3xl font-semibold text-white">7</p>
+              <p className="text-3xl font-semibold text-white">{stats.publicStat}</p>
             </div>
           </div>
         </section>
@@ -114,18 +146,50 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   );
 };
 
-const BookmarksViewWithSidebar: React.FC = () => (
-  <div className="flex-1 flex flex-col min-h-screen"> {/* p-6 removed from root */}
-    {/* New Page Title Section */}
-    <section className="px-6 pt-6 mb-6"> {/* Added pt-6 to match previous overall padding for top */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold text-white">📚 All Bookmarks</h2>
-          {/* Placeholder count, can be dynamic later */}
-          <p className="text-sm text-white/70">1,234 bookmarks found</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-3 py-1.5 bg-black/20 hover:bg-black/30 border border-white/10 rounded-md text-sm text-white/90 transition-colors">
+const BookmarksViewWithSidebar: React.FC = () => {
+  const {
+    activeCollection,
+    collectionData,
+    searchTerm,
+    openModal,
+    reorderBookmarks, // Added for passing to BookmarkGrid
+    deleteBookmarks   // Added for passing to BookmarkGrid
+  } = useBookmarks();
+
+  const currentViewData = collectionData?.[activeCollection];
+  const icon = currentViewData ? getEmojiIcon(currentViewData.icon) : '⏳';
+  const name = currentViewData?.name || 'Loading...';
+  // const count = currentViewData?.count || 0; // Count for title is from unfiltered items
+
+  const baseItems = currentViewData?.items || [];
+  const finalItemsToDisplay = searchTerm.trim() === ""
+    ? baseItems
+    : baseItems.filter(bookmark => {
+        const searchTermLower = searchTerm.toLowerCase();
+        return (
+          bookmark.title.toLowerCase().includes(searchTermLower) ||
+          (bookmark.description && bookmark.description.toLowerCase().includes(searchTermLower)) ||
+          bookmark.tags.some(tag => tag.toLowerCase().includes(searchTermLower))
+        );
+      });
+
+  const titleBookmarkCount = currentViewData?.count || 0; // For display in title, before search filtering
+
+  return (
+    <div className="flex-1 flex flex-col min-h-screen"> {/* p-6 removed from root */}
+      {/* New Page Title Section */}
+      <section className="px-6 pt-6 mb-6"> {/* Added pt-6 to match previous overall padding for top */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold text-white">
+              <span className="mr-2">{icon}</span>
+              {name}
+            </h2>
+            {/* Display count of items in the collection before search filtering */}
+            <p className="text-sm text-white/70">{titleBookmarkCount} bookmarks found</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="flex items-center gap-2 px-3 py-1.5 bg-black/20 hover:bg-black/30 border border-white/10 rounded-md text-sm text-white/90 transition-colors">
             <Filter size={16} /> Filter
           </button>
           <button className="flex items-center gap-2 px-3 py-1.5 bg-black/20 hover:bg-black/30 border border-white/10 rounded-md text-sm text-white/90 transition-colors">
@@ -136,11 +200,9 @@ const BookmarksViewWithSidebar: React.FC = () => (
     </section>
 
     {/* Recently Accessed Section (Wrapped) */}
-    {/* The outer div className="pb-4" is replaced by this section */}
     <section className="px-6 mb-8">
-      <div className="rounded-2xl bg-black/20 backdrop-blur-lg border border-white/10 px-6 py-4 flex items-center gap-3 overflow-x-auto"> {/* Updated bg and border like other new elements */}
+      <div className="rounded-2xl bg-black/20 backdrop-blur-lg border border-white/10 px-6 py-4 flex items-center gap-3 overflow-x-auto">
         <div className="text-white/80 font-medium mr-2">Recently Accessed</div>
-        {/* Example recently accessed items - kept for structure */}
         <span className="rounded-lg bg-white/10 px-3 py-1 text-white/80 text-sm">React Documentation</span>
         <span className="rounded-lg bg-white/10 px-3 py-1 text-white/80 text-sm">Node.js Best Practices</span>
         <span className="rounded-lg bg-white/10 px-3 py-1 text-white/80 text-sm">Tailwind CSS Docs</span>
@@ -150,10 +212,34 @@ const BookmarksViewWithSidebar: React.FC = () => (
     </section>
 
     {/* Bookmark Grid Section (Wrapped) */}
-    {/* The main className="flex-1 pb-8" is replaced by this section */}
-    {/* flex-1 might be needed if this section should grow, but AppLayout's main already has flex-1 */}
-    <section className="px-6 pb-6 flex-1"> {/* Added flex-1 here to allow grid to expand */}
-      <BookmarkGrid />
+    <section className="px-6 pb-6 flex-1 flex flex-col"> {/* Added flex flex-col for empty state centering */}
+      {finalItemsToDisplay.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
+          <PlusCircle size={48} className="mx-auto text-white/30 mb-4" />
+          <h3 className="text-xl font-semibold text-white/80 mb-2">
+            {searchTerm ? "No Bookmarks Match Your Search" : "This Collection is Empty"}
+          </h3>
+          <p className="text-white/50 mb-6 max-w-md">
+            {searchTerm
+              ? `Try refining your search term or clearing it to see all bookmarks in "${name}".`
+              : `Add some bookmarks to "${name}" to see them here.`}
+          </p>
+          {!searchTerm && (
+            <button
+              onClick={openModal} // openModal from useBookmarks
+              className="bg-primary hover:bg-primary/90 text-white font-medium py-2.5 px-5 rounded-lg flex items-center mx-auto text-sm transition-colors"
+            >
+              <ListPlus size={18} className="mr-2"/> Add Bookmark to "{name}"
+            </button>
+          )}
+        </div>
+      ) : (
+        <BookmarkGrid
+          bookmarks={finalItemsToDisplay}
+          reorderBookmarks={reorderBookmarks}
+          deleteBookmarks={deleteBookmarks}
+        />
+      )}
     </section>
   </div>
 );

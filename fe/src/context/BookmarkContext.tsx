@@ -1,30 +1,32 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { useAuth } from './AuthContext'; // Add this import
+import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react'; // Added useMemo
+import { useAuth } from './AuthContext';
 import { sampleBookmarks, sampleCollections } from '../data/sampleData';
 import { Bookmark, Collection } from '../types';
 
+// New type for collection with its items
+export interface CollectionWithItems extends Collection {
+  count: number;
+  items: Bookmark[];
+}
+
+// Updated Context Type
 interface BookmarkContextType {
-  bookmarks: Bookmark[];
-  collections: Collection[];
-  activeCollection: string;
+  bookmarks: Bookmark[]; // Still exposing raw bookmarks for potential direct use
+  collections: Collection[]; // Original collections array from sampleData
+  activeCollection: string; // ID of the active collection (e.g., 'all', 'favorites', 'coll_1')
+  setActiveCollection: (collectionId: string) => void;
+  collectionData: { [key: string]: CollectionWithItems }; // Processed data for display
   searchTerm: string;
-  isModalOpen: boolean;
-  setActiveCollection: (collection: string) => void;
   setSearchTerm: (term: string) => void;
+  isModalOpen: boolean;
+  openModal: () => void;
+  closeModal: () => void;
   toggleFavorite: (id: number) => void;
   addBookmark: (bookmark: Omit<Bookmark, 'id' | 'createdAt'>) => void;
   deleteBookmark: (id: number) => void;
-  deleteBookmarks: (ids: number[]) => void; // Thêm hàm deleteBookmarks ở đây
-  openModal: () => void;
-  closeModal: () => void;
-  filteredBookmarks: Bookmark[];
-  // New state for filters
-  selectedTag: string | null;
-  setSelectedTag: (tag: string | null) => void;
-  selectedDateRange: string | null; // e.g., "all", "today", "last7days", "last30days"
-  setSelectedDateRange: (range: string | null) => void;
-  availableTags: string[];
-  reorderBookmarks: (sourceIdx: number, destIdx: number) => void;
+  deleteBookmarks: (ids: number[]) => void;
+  reorderBookmarks: (sourceIdx: number, destIdx: number) => void; // Kept as it operates on raw bookmarks
 }
 
 const BookmarkContext = createContext<BookmarkContextType | undefined>(undefined);
@@ -42,23 +44,12 @@ interface BookmarkProviderProps {
 }
 
 export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
-  const { currentUser } = useAuth(); // Add this line
+  const { currentUser } = useAuth();
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(sampleBookmarks);
-  const [collections] = useState<Collection[]>(sampleCollections);
-  const [activeCollection, setActiveCollection] = useState<string>("All Bookmarks");
+  const [staticCollections] = useState<Collection[]>(sampleCollections); // Renamed to avoid confusion
+  const [activeCollection, setActiveCollection] = useState<string>('all'); // Initialized to 'all'
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  // New state for filters
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [selectedDateRange, setSelectedDateRange] = useState<string | null>(null);
-
-  const availableTags = React.useMemo(() => {
-    const allTags = new Set<string>();
-    bookmarks.forEach(bookmark => {
-      bookmark.tags.forEach(tag => allTags.add(tag));
-    });
-    return Array.from(allTags).sort();
-  }, [bookmarks]);
 
   const toggleFavorite = (id: number) => {
     setBookmarks(
@@ -95,59 +86,67 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
-  // Filter bookmarks based on active collection and search term
-  // Filter bookmarks based on active collection and search term
-  const filteredBookmarks = bookmarks.filter((bookmark) => {
-    const matchesCollection =
-      activeCollection === "All Bookmarks" ||
-      (activeCollection === "Favorites" && currentUser && bookmark.isFavorite) ||
-      activeCollection === "Recently Added" ||
-      activeCollection === bookmark.collection;
-      
-    const matchesSearch =
-      searchTerm === "" ||
-      bookmark.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (bookmark.description && bookmark.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      bookmark.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+  const collectionData = useMemo(() => {
+    const data: { [key: string]: CollectionWithItems } = {};
+    const recentLimit = 10;
 
-    const matchesTag =
-      !selectedTag || bookmark.tags.includes(selectedTag);
+    // Sort all bookmarks by createdAt date for 'all' and 'recently_added'
+    const sortedBookmarks = [...bookmarks].sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 
-    const matchesDateRange = () => {
-      if (!selectedDateRange || selectedDateRange === "all") return true;
-      // Ensure bookmark.createdAt is valid before creating a Date object
-      if (!bookmark.createdAt) return true; // Or handle as an error/default
-
-      const bookmarkDate = new Date(bookmark.createdAt);
-       // Check if bookmarkDate is valid after parsing
-      if (isNaN(bookmarkDate.getTime())) return true;
-
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // Start of today
-
-      switch (selectedDateRange) {
-        case "today":
-          return bookmarkDate >= today;
-        case "last7days":
-          const sevenDaysAgo = new Date(today);
-          sevenDaysAgo.setDate(today.getDate() - 7);
-          return bookmarkDate >= sevenDaysAgo;
-        case "last30days":
-          const thirtyDaysAgo = new Date(today);
-          thirtyDaysAgo.setDate(today.getDate() - 30);
-          return bookmarkDate >= thirtyDaysAgo;
-        default:
-          return true;
-      }
+    // 'All Bookmarks' Collection
+    data['all'] = {
+      id: 'all',
+      name: 'All Bookmarks',
+      icon: 'Archive', // Example icon name, actual component rendered in UI
+      items: sortedBookmarks,
+      count: sortedBookmarks.length,
     };
 
-    return matchesCollection && matchesSearch && matchesTag && matchesDateRange();
-  });
+    // 'Favorites' Collection
+    const favoriteItems = sortedBookmarks.filter(bm => bm.isFavorite);
+    data['favorites'] = {
+      id: 'favorites',
+      name: 'Favorites',
+      icon: 'Heart',
+      items: favoriteItems,
+      count: favoriteItems.length,
+    };
 
+    // 'Recently Added' Collection
+    data['recently_added'] = {
+      id: 'recently_added',
+      name: 'Recently Added',
+      icon: 'Clock',
+      items: sortedBookmarks.slice(0, recentLimit),
+      count: Math.min(sortedBookmarks.length, recentLimit),
+    };
+
+    // Process static collections from sampleCollections
+    staticCollections.forEach(collection => {
+      // Assuming bookmark.collection is the string ID (e.g., "coll_1")
+      const collectionItems = sortedBookmarks.filter(bm => bm.collection === collection.id);
+      data[collection.id] = {
+        ...collection, // id, name, icon from staticCollection
+        items: collectionItems,
+        count: collectionItems.length,
+      };
+    });
+
+    return data;
+  }, [bookmarks, staticCollections]);
+
+  // Reorder bookmarks - this operates on the base `bookmarks` array.
+  // `collectionData` will update automatically due to `useMemo` dependency on `bookmarks`.
   const reorderBookmarks = (sourceIdx: number, destIdx: number) => {
     setBookmarks((prev) => {
-      const updated = [...prev];
+      const updated = [...prev]; // Create a new array
+      // Find the actual bookmarks being moved based on currently displayed items if activeCollection is not 'all'
+      // This simple reorder works correctly if sourceIdx/destIdx are for the 'all' bookmarks view.
+      // If they are indices from a filtered/specific collection view, this logic might need adjustment
+      // or the DnD should provide indices relative to the `bookmarks` array.
+      // For now, assuming indices are relative to the full `bookmarks` array as `collectionData` is derived.
       const [removed] = updated.splice(sourceIdx, 1);
       updated.splice(destIdx, 0, removed);
       return updated;
@@ -155,27 +154,22 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
   };
 
   const value = {
-    bookmarks,
-    collections,
+    bookmarks, // Raw bookmarks
+    collections: staticCollections, // Original collection definitions
     activeCollection,
-    searchTerm,
-    isModalOpen,
     setActiveCollection,
+    collectionData, // New processed data
+    searchTerm,
     setSearchTerm,
+    isModalOpen,
+    openModal,
+    closeModal,
     toggleFavorite,
     addBookmark,
     deleteBookmark,
-    deleteBookmarks, // Thêm vào context
-    openModal,
-    closeModal,
-    // New values for context
-    selectedTag,
-    setSelectedTag,
-    selectedDateRange,
-    setSelectedDateRange,
-    availableTags,
-    filteredBookmarks,
-    reorderBookmarks
+    deleteBookmarks,
+    reorderBookmarks,
+    // Removed: filteredBookmarks, selectedTag, setSelectedTag, selectedDateRange, setSelectedDateRange, availableTags
   };
 
   return (

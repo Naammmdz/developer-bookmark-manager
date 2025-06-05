@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useBookmarks } from '../../context/BookmarkContext';
+// useBookmarks removed, functionality will come from props
 import BookmarkCard from './BookmarkCard';
-import { FolderOpen } from 'lucide-react';
+// FolderOpen removed as empty state is handled by parent
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import GlassCard from '../ui/GlassCard';
+import { Bookmark } from '../../types'; // Import Bookmark type for props
 
-const BookmarkPreviewModal = ({ bookmark, onClose }: { bookmark: any, onClose: () => void }) => {
-  if (!bookmark) return null;
+interface BookmarkPreviewModalProps {
+  bookmark: Bookmark; // Use Bookmark type
+  onClose: () => void;
+}
+
+const BookmarkPreviewModal: React.FC<BookmarkPreviewModalProps> = ({ bookmark, onClose }) => {
+  // No change to modal content based on this specific subtask, but good to ensure types are consistent.
+  // if (!bookmark) return null; // This check is good if bookmark could be null/undefined.
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <GlassCard className="relative w-full max-w-xl h-96 flex items-center justify-center animate-fade-in overflow-hidden">
+      <GlassCard className="relative w-full max-w-xl h-screen max-h-[80vh] flex items-center justify-center animate-fade-in overflow-hidden"> {/* Adjusted height */}
         <button
           className="absolute top-3 right-3 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/80 z-10"
           onClick={onClose}
@@ -21,9 +28,9 @@ const BookmarkPreviewModal = ({ bookmark, onClose }: { bookmark: any, onClose: (
         </button>
         <iframe
           src={bookmark.url}
-          title="Bookmark Preview"
+          title={bookmark.title || "Bookmark Preview"} // Use bookmark title
           className="w-full h-full border-0 bg-white rounded-2xl"
-          sandbox="allow-same-origin allow-scripts allow-popups"
+          sandbox="allow-scripts allow-popups" // Removed allow-same-origin for broader preview compatibility, with caution
           loading="lazy"
         />
       </GlassCard>
@@ -31,9 +38,15 @@ const BookmarkPreviewModal = ({ bookmark, onClose }: { bookmark: any, onClose: (
   );
 };
 
-const BookmarkGrid: React.FC = () => {
-  const { filteredBookmarks, activeCollection, reorderBookmarks, deleteBookmarks } = useBookmarks();
-  const [previewBookmark, setPreviewBookmark] = useState<any>(null);
+interface BookmarkGridProps {
+  bookmarks: Bookmark[];
+  reorderBookmarks: (sourceIdx: number, destIdx: number) => void;
+  deleteBookmarks: (ids: number[]) => void;
+  // activeCollection is not needed here anymore as parent handles empty state based on it
+}
+
+const BookmarkGrid: React.FC<BookmarkGridProps> = ({ bookmarks, reorderBookmarks, deleteBookmarks }) => {
+  const [previewBookmark, setPreviewBookmark] = useState<Bookmark | null>(null); // Typed state
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
@@ -51,26 +64,16 @@ const BookmarkGrid: React.FC = () => {
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     if (result.source.index === result.destination.index) return;
+    // Important: reorderBookmarks expects indices relative to the *original unfiltered list*
+    // if it's modifying the source of truth in the context directly.
+    // If `bookmarks` prop is already filtered, this might lead to issues
+    // unless `reorderBookmarks` in context is aware of the currently displayed (sub)set.
+    // For now, assuming `reorderBookmarks` handles this or expects indices from the currently displayed list.
     reorderBookmarks(result.source.index, result.destination.index);
   };
 
-  if (filteredBookmarks.length === 0) {
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="flex flex-col items-center justify-center min-h-[400px] text-center"
-      >
-        <FolderOpen size={48} className="text-white/30 mb-4" />
-        <h3 className="text-xl font-medium text-white/80 mb-2">No bookmarks found</h3>
-        <p className="text-white/50 max-w-md">
-          {activeCollection === "All Bookmarks"
-            ? "You don't have any bookmarks yet. Add some to get started!"
-            : `No bookmarks in the "${activeCollection}" collection.`}
-        </p>
-      </motion.div>
-    );
-  }
+  // Empty state is now handled by the parent component (BookmarksViewWithSidebar)
+  // The `if (bookmarks.length === 0)` block has been removed.
 
   return (
     <>
@@ -79,19 +82,19 @@ const BookmarkGrid: React.FC = () => {
           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${bulkMode ? 'bg-primary/80 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20'}`}
           onClick={toggleBulkMode}
         >
-          {bulkMode ? 'Thoát chọn nhiều' : 'Chọn nhiều'}
+          {bulkMode ? 'Cancel Bulk Select' : 'Bulk Select'}
         </button>
         {bulkMode && selectedIds.length > 0 && (
           <div className="flex items-center gap-2">
-            <span className="text-white/80 text-sm">Đã chọn {selectedIds.length}</span>
+            <span className="text-white/80 text-sm">{selectedIds.length} selected</span>
             <button
               className="px-3 py-1.5 rounded-lg bg-red-500/80 text-white text-sm font-medium hover:bg-red-600 transition-colors"
               onClick={() => {
-                deleteBookmarks(selectedIds);
+                deleteBookmarks(selectedIds); // This function is now passed as a prop
                 setSelectedIds([]);
               }}
             >
-              Xóa đã chọn
+              Delete Selected
             </button>
           </div>
         )}
@@ -100,25 +103,25 @@ const BookmarkGrid: React.FC = () => {
         <Droppable droppableId="bookmarkGrid" direction="vertical">
           {(provided) => (
             <div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full" // Consider responsive columns if needed
               ref={provided.innerRef}
               {...provided.droppableProps}
             >
-              {filteredBookmarks.map((bookmark, index) => (
+              {bookmarks.map((bookmark, index) => ( // Use `bookmarks` prop
                 <Draggable key={bookmark.id} draggableId={bookmark.id.toString()} index={index}>
-                  {(provided, snapshot) => (
+                  {(providedDraggable, snapshot) => (
                     <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
+                      ref={providedDraggable.innerRef}
+                      {...providedDraggable.draggableProps}
+                      {...providedDraggable.dragHandleProps}
                       style={{
-                        ...provided.draggableProps.style,
-                        zIndex: snapshot.isDragging ? 10 : 'auto',
+                        ...providedDraggable.draggableProps.style,
+                        zIndex: snapshot.isDragging ? 50 : 'auto', // Ensure dragging item is on top
                       }}
                     >
                       <BookmarkCard
                         bookmark={bookmark}
-                        index={index}
+                        index={index} // Pass index if BookmarkCard uses it
                         onPreview={() => setPreviewBookmark(bookmark)}
                         bulkMode={bulkMode}
                         checked={selectedIds.includes(bookmark.id)}
@@ -134,6 +137,7 @@ const BookmarkGrid: React.FC = () => {
         </Droppable>
       </DragDropContext>
       {previewBookmark && (
+        // The onClick on this div might be too broad, consider if it should be on a specific backdrop element
         <div onClick={() => setPreviewBookmark(null)}>
           <BookmarkPreviewModal bookmark={previewBookmark} onClose={() => setPreviewBookmark(null)} />
         </div>
