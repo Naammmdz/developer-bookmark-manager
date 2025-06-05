@@ -1,184 +1,95 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { useBookmarks } from '../../context/BookmarkContext';
 import { useAuth } from '../../context/AuthContext';
-import { Search, Bookmark, Settings, Plus } from 'lucide-react';
-import NeonButton from '../ui/NeonButton';
-import { Link } from 'react-router-dom'; // Added Link
+import { Bookmark, Grid, List, ListPlus, User, Search } from 'lucide-react'; // Added new icons
 
-// Added props for modal control
 interface HeaderProps {
   openLoginModal: () => void;
-  openRegisterModal: () => void;
-  openSettingsModal: () => void; // Added openSettingsModal to props
+  openSettingsModal: () => void;
+  // openRegisterModal is removed as it's not used in the new design
 }
 
-const Header: React.FC<HeaderProps> = ({ openLoginModal, openRegisterModal, openSettingsModal }) => {
-  const {
-    searchTerm,
-    setSearchTerm,
-    openModal,
-    selectedTag,
-    setSelectedTag,
-    selectedDateRange,
-    setSelectedDateRange,
-    availableTags
-  } = useBookmarks();
-  const { currentUser, logout } = useAuth();
-  
-  const baseSelectClasses = "py-2 px-3 rounded-lg bg-white/5 border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-white/90 outline-none transition-all appearance-none text-sm";
+const Header: React.FC<HeaderProps> = ({ openLoginModal, openSettingsModal }) => {
+  const { searchTerm, setSearchTerm, openModal } = useBookmarks();
+  const { currentUser } = useAuth();
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value); // setSearchTerm is from useBookmarks context
+  };
+
+  const handleProfileClick = () => {
+    if (currentUser) {
+      openSettingsModal();
+    } else {
+      openLoginModal();
+    }
+  };
 
   return (
-    <motion.header
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="sticky top-0 z-50 backdrop-blur-xl bg-background-dark/60 border-b border-white/10"
-    >
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        {/* Logo */}
-        <motion.div
-          className="flex items-center gap-2"
-          whileHover={{ scale: 1.02 }}
-        >
-          <Bookmark size={24} className="text-primary" />
-          <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            DevBookmarks
-          </h1>
-        </motion.div>
-        
-        {/* Search and Filter Section - Desktop */}
-        <div className="flex-1 flex justify-center px-4 hidden md:flex">
-          <div className="relative max-w-2xl w-full flex items-center gap-2">
-            {/* Search Bar */}
-            <div className="flex-1 relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search size={16} className="text-white/50" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search bookmarks..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full py-2 pl-10 pr-4 rounded-lg bg-white/5 border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 backdrop-blur-md text-white/90 placeholder-white/50 outline-none transition-all text-sm"
-              />
-            </div>
+    <div className="flex items-center justify-between"> {/* Root div as specified */}
+      {/* Logo */}
+      <div className="flex items-center gap-2">
+        <Bookmark size={28} className="text-primary" /> {/* Logo Icon */}
+        <span className="text-xl font-semibold text-white">DevMarks</span> {/* Logo Text */}
+      </div>
 
-            {/* Tag Filter */}
-            <select
-              value={selectedTag || ''}
-              onChange={(e) => setSelectedTag(e.target.value || null)}
-              className={baseSelectClasses}
-            >
-              <option value="">All Tags</option>
-              {availableTags.map(tag => (
-                <option key={tag} value={tag}>{tag}</option>
-              ))}
-            </select>
-
-            {/* Date Range Filter */}
-            <select
-              value={selectedDateRange || 'all'}
-              onChange={(e) => setSelectedDateRange(e.target.value === 'all' ? null : e.target.value)}
-              className={baseSelectClasses}
-            >
-              <option value="all">Anytime</option>
-              <option value="today">Today</option>
-              <option value="last7days">Last 7 days</option>
-              <option value="last30days">Last 30 days</option>
-            </select>
-          </div>
+      {/* Search Bar */}
+      <div className="flex-1 max-w-lg mx-6 relative"> {/* Adjusted for better spacing and icon */}
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search size={18} className="text-white/40" />
         </div>
-        
-        {/* Action Buttons */}
-        {/* Ensure this div doesn't shrink if search/filter area grows */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <NeonButton
-            onClick={openModal}
-            color="accent"
-            icon={<Plus size={16} />}
-          >
-            Add New
-          </NeonButton>
-          
-          {currentUser ? (
-            <>
-              {/* Wrapped welcome message with Link */}
-              <Link to="/profile" className="text-white/90 text-sm hover:text-primary transition-colors hidden sm:inline px-3 py-2 rounded-md">
-                Welcome, {currentUser.displayName || currentUser.email}
-              </Link>
-              <button
-                onClick={logout}
-                className="p-2 rounded-lg bg-red-500/80 text-white hover:bg-red-500/100 transition-all text-sm"
-              >
-                Logout
-              </button>
-            </>
+        <input
+          type="search"
+          placeholder="Search bookmarks, tags, collections..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+          className="w-full pl-10 pr-4 py-2 rounded-lg bg-black/20 border border-white/10 focus:ring-2 focus:ring-primary/70 focus:border-primary/70 outline-none placeholder-white/40 text-white text-sm transition-colors duration-300 focus:bg-black/30"
+        />
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex items-center gap-2">
+        {/* Grid/List Toggles */}
+        <button
+          className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-md transition-colors"
+          title="Grid View"
+        >
+          <Grid size={20} />
+        </button>
+        <button
+          className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-md transition-colors"
+          title="List View"
+        >
+          <List size={20} />
+        </button>
+
+        {/* Separator */}
+        <div className="h-6 w-px bg-white/10 mx-1"></div>
+
+        {/* Add Bookmark Button */}
+        <button
+          onClick={() => openModal()} // openModal is from useBookmarks context
+          className="flex items-center gap-2 px-3 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg text-sm font-medium transition-colors"
+          title="Add new bookmark"
+        >
+          <ListPlus size={18} />
+          <span>Add New</span>
+        </button>
+
+        {/* Profile Icon Button */}
+        <button
+          onClick={handleProfileClick}
+          className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
+          title={currentUser ? "Profile Settings" : "Login"}
+        >
+          {currentUser && currentUser.photoURL ? (
+            <img src={currentUser.photoURL} alt="Profile" className="w-7 h-7 rounded-full object-cover" />
           ) : (
-            <>
-              <button
-                onClick={openLoginModal} // Modified onClick
-                className="p-2 rounded-lg bg-primary/80 text-white hover:bg-primary/100 transition-all text-sm"
-              >
-                Login
-              </button>
-              <button
-                onClick={openRegisterModal} // Modified onClick
-                className="p-2 rounded-lg bg-secondary/80 text-white hover:bg-secondary/100 transition-all text-sm"
-              >
-                Register
-              </button>
-            </>
+            <User size={22} className="text-white/70 hover:text-white" />
           )}
-
-          <button
-            onClick={openSettingsModal} // Added onClick handler
-            className="p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
-            aria-label="Open settings" // Added aria-label
-          >
-            <Settings size={18} className="text-white/70" />
-          </button>
-        </div>
+        </button>
       </div>
-      
-      {/* Mobile Search and Filters */}
-      <div className="md:hidden px-4 pb-4 space-y-3">
-        {/* Mobile Search Input */}
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search size={16} className="text-white/50" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search bookmarks..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full py-2 pl-10 pr-4 rounded-lg bg-white/5 border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 backdrop-blur-md text-white/90 placeholder-white/50 outline-none transition-all text-sm"
-          />
-        </div>
-        {/* Mobile Tag Filter */}
-        <select
-          value={selectedTag || ''}
-          onChange={(e) => setSelectedTag(e.target.value || null)}
-          className={`${baseSelectClasses} w-full`}
-        >
-          <option value="">All Tags</option>
-          {availableTags.map(tag => (
-            <option key={`mobile-${tag}`} value={tag}>{tag}</option>
-          ))}
-        </select>
-        {/* Mobile Date Range Filter */}
-        <select
-          value={selectedDateRange || 'all'}
-          onChange={(e) => setSelectedDateRange(e.target.value === 'all' ? null : e.target.value)}
-          className={`${baseSelectClasses} w-full`}
-        >
-          <option value="all">Anytime</option>
-          <option value="today">Today</option>
-          <option value="last7days">Last 7 days</option>
-          <option value="last30days">Last 30 days</option>
-        </select>
-      </div>
-    </motion.header>
+    </div>
   );
 };
 

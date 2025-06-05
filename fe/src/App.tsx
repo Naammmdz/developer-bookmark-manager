@@ -7,7 +7,7 @@ import ProfilePage from './pages/ProfilePage';
 import Header from './components/layout/Header';
 import Sidebar from './components/layout/Sidebar';
 import BookmarkGrid from './components/bookmark/BookmarkGrid';
-import CollectionHeader from './components/layout/CollectionHeader';
+// CollectionHeader removed as it's no longer used in BookmarksViewWithSidebar
 import MobileNavigation from './components/layout/MobileNavigation';
 import AddBookmarkModal from './components/bookmark/AddBookmarkModal';
 import LoginModal from './components/auth/LoginModal';
@@ -15,6 +15,7 @@ import RegisterModal from './components/auth/RegisterModal';
 import SettingsModal from './components/settings/SettingsModal'; // Added Import
 import BackgroundAnimation from './components/layout/BackgroundAnimation';
 import KeyboardShortcutsButton from './components/ui/KeyboardShortcutsButton';
+import { Archive, FolderKanban, Heart, Globe, Filter, ArrowUpDown } from 'lucide-react'; // Icons for Stats Cards & BookmarksView
 
 // Props for AppLayout
 interface AppLayoutProps {
@@ -52,6 +53,44 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           />
         </header>
 
+        {/* Stats Cards Section */}
+        <section className="p-6">
+          <div className="grid grid-cols-4 gap-6 mb-8">
+            {/* Card 1: Total Bookmarks */}
+            <div className="bg-black/20 backdrop-blur-lg border border-white/10 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-white/70">Total Bookmarks</p>
+                <Archive size={20} className="text-primary" />
+              </div>
+              <p className="text-3xl font-semibold text-white">1,234</p>
+            </div>
+            {/* Card 2: Collections */}
+            <div className="bg-black/20 backdrop-blur-lg border border-white/10 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-white/70">Collections</p>
+                <FolderKanban size={20} className="text-primary" />
+              </div>
+              <p className="text-3xl font-semibold text-white">23</p>
+            </div>
+            {/* Card 3: Favorites */}
+            <div className="bg-black/20 backdrop-blur-lg border border-white/10 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-white/70">Favorites</p>
+                <Heart size={20} className="text-primary" />
+              </div>
+              <p className="text-3xl font-semibold text-white">128</p>
+            </div>
+            {/* Card 4: Public */}
+            <div className="bg-black/20 backdrop-blur-lg border border-white/10 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-white/70">Public</p>
+                <Globe size={20} className="text-primary" />
+              </div>
+              <p className="text-3xl font-semibold text-white">7</p>
+            </div>
+          </div>
+        </section>
+
         {/* Outlet for child route components */}
         <main className="p-6 flex-1 overflow-y-auto">
           <Outlet /> {/* BookmarksViewWithSidebar or ProfileView will render here */}
@@ -76,43 +115,46 @@ const AppLayout: React.FC<AppLayoutProps> = ({
 };
 
 const BookmarksViewWithSidebar: React.FC = () => (
-  // Root element with p-6 padding, sidebar and header are removed
-  <div className="flex-1 flex flex-col min-h-screen p-6">
-    {/* Bộ lọc và tiêu đề */}
-    <div className="flex items-center justify-between pb-2">
-      <div>
-        <CollectionHeader />
-        <div className="text-white/60 text-base">12 bookmarks found</div>
+  <div className="flex-1 flex flex-col min-h-screen"> {/* p-6 removed from root */}
+    {/* New Page Title Section */}
+    <section className="px-6 pt-6 mb-6"> {/* Added pt-6 to match previous overall padding for top */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold text-white">📚 All Bookmarks</h2>
+          {/* Placeholder count, can be dynamic later */}
+          <p className="text-sm text-white/70">1,234 bookmarks found</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-2 px-3 py-1.5 bg-black/20 hover:bg-black/30 border border-white/10 rounded-md text-sm text-white/90 transition-colors">
+            <Filter size={16} /> Filter
+          </button>
+          <button className="flex items-center gap-2 px-3 py-1.5 bg-black/20 hover:bg-black/30 border border-white/10 rounded-md text-sm text-white/90 transition-colors">
+            <ArrowUpDown size={16} /> Sort
+          </button>
+        </div>
       </div>
-      <div className="flex items-center gap-3">
-        <select className="rounded-lg px-3 py-2 bg-white/10 text-white/80 text-sm">
-          <option>All time</option>
-          <option>Today</option>
-          <option>This week</option>
-        </select>
-        <select className="rounded-lg px-3 py-2 bg-white/10 text-white/80 text-sm">
-          <option>Most Recent</option>
-          <option>Oldest</option>
-        </select>
-      </div>
-    </div>
-    {/* Recently Accessed */}
-    <div className="pb-4">
-      <div className="rounded-2xl bg-white/10 px-6 py-4 flex items-center gap-3 overflow-x-auto">
+    </section>
+
+    {/* Recently Accessed Section (Wrapped) */}
+    {/* The outer div className="pb-4" is replaced by this section */}
+    <section className="px-6 mb-8">
+      <div className="rounded-2xl bg-black/20 backdrop-blur-lg border border-white/10 px-6 py-4 flex items-center gap-3 overflow-x-auto"> {/* Updated bg and border like other new elements */}
         <div className="text-white/80 font-medium mr-2">Recently Accessed</div>
-        {/* Example recently accessed items */}
-        <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">React Documentation</span>
-        <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">Node.js Best Practices</span>
-        <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">Tailwind CSS Documentation</span>
-        <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">TypeScript Handbook</span>
-        <span className="rounded-lg bg-white/20 px-3 py-1 text-white/80 text-sm">Express.js Guide</span>
+        {/* Example recently accessed items - kept for structure */}
+        <span className="rounded-lg bg-white/10 px-3 py-1 text-white/80 text-sm">React Documentation</span>
+        <span className="rounded-lg bg-white/10 px-3 py-1 text-white/80 text-sm">Node.js Best Practices</span>
+        <span className="rounded-lg bg-white/10 px-3 py-1 text-white/80 text-sm">Tailwind CSS Docs</span>
+        <span className="rounded-lg bg-white/10 px-3 py-1 text-white/80 text-sm">TypeScript Handbook</span>
+        <span className="rounded-lg bg-white/10 px-3 py-1 text-white/80 text-sm">Express.js Guide</span>
       </div>
-    </div>
-    {/* Grid bookmarks */}
-    <main className="flex-1 pb-8"> {/* Adjusted padding, p-6 handles others */}
+    </section>
+
+    {/* Bookmark Grid Section (Wrapped) */}
+    {/* The main className="flex-1 pb-8" is replaced by this section */}
+    {/* flex-1 might be needed if this section should grow, but AppLayout's main already has flex-1 */}
+    <section className="px-6 pb-6 flex-1"> {/* Added flex-1 here to allow grid to expand */}
       <BookmarkGrid />
-    </main>
-    {/* KeyboardShortcutsButton moved to AppLayout */}
+    </section>
   </div>
 );
 
