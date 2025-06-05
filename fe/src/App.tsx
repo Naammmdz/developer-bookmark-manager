@@ -15,6 +15,7 @@ import RegisterModal from './components/auth/RegisterModal';
 import SettingsModal from './components/settings/SettingsModal'; // Added Import
 import BackgroundAnimation from './components/layout/BackgroundAnimation';
 import BulkActionBar from './components/ui/BulkActionBar'; // Added Import
+import ContentToolbar from './components/layout/ContentToolbar'; // Added Import
 
 // Props for AppLayout
 interface AppLayoutProps {
@@ -60,6 +61,7 @@ const BookmarksViewWithSidebar: React.FC = () => (
     <Sidebar />
     <main className="flex-1 px-4 py-6 md:p-6 pb-16 md:pb-6"> {/* Added bottom padding for mobile nav overlap */}
       <div className="max-w-6xl mx-auto">
+        <ContentToolbar /> {/* Added ContentToolbar here */}
         <CollectionHeader />
         <BookmarkGrid />
       </div>

@@ -67,6 +67,31 @@ const Sidebar: React.FC = () => {
             ))}
           </ul>
         </nav>
+
+        {/* NEW: Filters Section */}
+        <div className="mt-8 pt-4 border-t border-white/10"> {/* Added border-t for separation */}
+          <h3 className="text-white/80 font-medium mb-3 px-2">Filters</h3>
+
+          <div className="px-2 space-y-3"> {/* Added padding and spacing for filter placeholders */}
+            <div>
+              <p className="text-sm text-white/60 mb-1">Tags</p>
+              {/* TagsFilter will go here. For now, a placeholder: */}
+              <div className="p-2 rounded bg-white/5 text-xs text-white/40">Placeholder: Tags Filter</div>
+            </div>
+
+            <div>
+              <p className="text-sm text-white/60 mb-1">Date Range</p>
+              {/* DateRangeFilter will go here. For now, a placeholder: */}
+              <div className="p-2 rounded bg-white/5 text-xs text-white/40">Placeholder: Date Range Filter</div>
+            </div>
+
+            <div>
+              <p className="text-sm text-white/60 mb-1">Type</p>
+              {/* TypeFilter will go here. For now, a placeholder: */}
+              <div className="p-2 rounded bg-white/5 text-xs text-white/40">Placeholder: Type Filter</div>
+            </div>
+          </div>
+        </div>
       </GlassCard>
     </motion.aside>
   );
