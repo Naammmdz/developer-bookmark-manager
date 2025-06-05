@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react'; // Added useMemo
+import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { sampleBookmarks, sampleCollections } from '../data/sampleData';
 import { Bookmark, Collection } from '../types';
