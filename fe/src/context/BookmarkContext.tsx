@@ -94,9 +94,7 @@ export const BookmarkProvider = ({ children }: BookmarkProviderProps) => {
     const recentLimit = 10;
 
     // Sort all bookmarks by createdAt date for 'all' and 'recently_added'
-    const sortedBookmarks = [...bookmarks].sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    const sortedBookmarks = [...bookmarks].map(bm => ({ ...bm, parsedCreatedAt: new Date(bm.createdAt) })).filter(bm => !isNaN(bm.parsedCreatedAt.getTime())).sort((a, b) => b.parsedCreatedAt.getTime() - a.parsedCreatedAt.getTime());
 
     // 'All Bookmarks' Collection
     data['all'] = {
