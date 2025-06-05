@@ -49,7 +49,7 @@ const AddCollectionModal: React.FC<AddCollectionModalProps> = ({
       onClick={onClose} // Close on overlay click
     >
       <div
-        className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-xl p-6 shadow-2xl w-full max-w-md transform transition-all duration-300 ease-out scale-95 opacity-0 animate-scale-in"
+        className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-xl p-6 shadow-2xl w-full max-w-md" // Removed animation classes
         onClick={(e) => e.stopPropagation()} // Prevent modal close when clicking inside
       >
         <div className="flex justify-between items-center mb-6">
