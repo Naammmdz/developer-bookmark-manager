@@ -37,7 +37,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       <BackgroundAnimation className="absolute inset-0 -z-10" />
 
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-screen w-64 z-40 overflow-y-auto glass-card flex flex-col border-r border-white/10 bg-sidebar">
+      <aside className="fixed left-0 top-0 h-screen w-64 bg-black/20 backdrop-blur-lg border-r border-white/10 z-40 overflow-y-auto flex flex-col">
         <Sidebar />
       </aside>
 

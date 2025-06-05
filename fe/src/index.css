@@ -63,6 +63,7 @@ input:-webkit-autofill:focus {
   background: rgba(0,0,0,0.2) !important;
   backdrop-filter: blur(16px) !important;
   border-right: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 0 !important; /* Ensure sharp corners */
 }
 
 .header {
